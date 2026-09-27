@@ -1,0 +1,27 @@
+{
+  "_aide": "Catalogue des modeles proposes dans le menu. Un fournisseur = une URL compatible OpenAI (/chat/completions) + le nom de la variable d'environnement qui contient sa cle. Un modele n'apparait que si la cle de son fournisseur est definie. Le premier modele disponible est celui par defaut. Si un modele est sature, la question repart avec les suivants du meme fournisseur, dans l'ordre de cette liste.",
+
+  "fournisseurs": {
+    "gemini": {
+      "nom": "Google Gemini",
+      "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "cle": "GEMINI_API_KEY",
+      "logo": "googlegemini.svg",
+      "couleur": "#8E75B2"
+    },
+    "nvidia": {
+      "nom": "NVIDIA",
+      "base_url": "https://integrate.api.nvidia.com/v1",
+      "cle": "NVIDIA_API_KEY",
+      "logo": "nvidia.svg",
+      "couleur": "#76B900"
+    }
+  },
+
+  "modeles": [
+    {"id": "gemini-3.8-flash", "nom": "Gemini 3.8 Flash", "fournisseur": "gemini", "note": "Rapide et précis"},
+    {"id": "gemini-3.6-flash", "nom": "Gemini 3.6 Flash", "fournisseur": "gemini", "note": "Rapide"},
+    {"id": "gemini-3.5-flash", "nom": "Gemini 3.5 Flash", "fournisseur": "gemini", "note": "Génération précédente"},
+    {"id": "nvidia/nemotron-3.5-lightning-30b-a3b", "nom": "Nemotron 3.5 Lightning", "fournisseur": "nvidia", "note": "Open source · vitesse variable"}
+  ]
+}

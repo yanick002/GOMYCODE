@@ -1,8 +1,9 @@
 """Boucle question -> modele -> outils MCP -> reponse.
 
 Fonctionne avec tout fournisseur compatible OpenAI (/chat/completions avec
-« tools ») : Groq, OpenRouter, Together, Ollama, vLLM... Le modele choisi doit
-savoir appeler des outils (function calling), sinon il repond sans donnees.
+« tools ») : Gemini, NVIDIA, Groq, OpenRouter, Ollama... Les modeles proposes
+sont declares dans modeles.json. Le modele choisi doit savoir appeler des
+outils (function calling), sinon il repond sans donnees.
 """
 import asyncio
 import json
@@ -78,15 +79,16 @@ def _nettoyer(texte: str) -> str:
     return re.sub(r"<think>.*?</think>", "", texte or "", flags=re.S).strip()
 
 
-async def _completion(http: httpx.AsyncClient, modele: str, messages: list, outils: list,
+async def _completion(http: httpx.AsyncClient, modele: dict, messages: list, outils: list,
                       choix: str = "auto") -> dict:
-    corps = {"model": modele, "messages": messages, "temperature": 0.2,
+    """modele : une entree de config.MODELES (id, base_url, api_key)."""
+    corps = {"model": modele["id"], "messages": messages, "temperature": 0.2,
              "tools": outils, "tool_choice": choix}
-    entetes = {"Authorization": "Bearer " + config.LLM_API_KEY} if config.LLM_API_KEY else {}
+    entetes = {"Authorization": "Bearer " + modele["api_key"]} if modele["api_key"] else {}
 
     for essai in range(3):
         try:
-            r = await http.post(config.LLM_BASE_URL + "/chat/completions", json=corps, headers=entetes)
+            r = await http.post(modele["base_url"] + "/chat/completions", json=corps, headers=entetes)
         except httpx.HTTPError as e:
             raise ErreurModele("Fournisseur du modele injoignable (%s)." % type(e).__name__) from e
         # Quota par minute ou surcharge : l'attente se compte en dizaines de
@@ -119,14 +121,14 @@ class _Basculer(Exception):
 
 
 async def repondre(question: str, historique: list[dict], valorisation: dict,
-                   date: str | None, session: ClientSession):
-    """Generateur d'evenements : "outil" (appel en cours), "attente" (quota,
-    surcharge ou bascule vers un modele de secours), puis "reponse".
+                   date: str | None, session: ClientSession, chaine: list[dict]):
+    """Generateur d'evenements : "modele" (celui qui travaille), "outil" (appel
+    en cours), "attente" (quota, surcharge ou bascule), puis "reponse".
 
-    Les modeles sont essayes dans l'ordre de LLM_MODEL. Si l'un est sature ou
-    hors quota, la question repart de zero avec le suivant : repartir de zero
-    evite de melanger l'historique d'appels (et les signatures Gemini) de deux
-    modeles differents.
+    chaine : le modele choisi puis ses secours (config.chaine). Si l'un est
+    sature ou hors quota, la question repart de zero avec le suivant : repartir
+    de zero evite de melanger l'historique d'appels (et les signatures Gemini)
+    de deux modeles differents.
     """
     outils = await marche.outils_pour_modele(session)
     noms = {o["function"]["name"] for o in outils}
@@ -141,8 +143,9 @@ async def repondre(question: str, historique: list[dict], valorisation: dict,
         return texte
 
     async with httpx.AsyncClient(timeout=DELAI) as http:
-        for rang, modele in enumerate(config.LLM_MODELS):
-            secours = rang + 1 < len(config.LLM_MODELS)
+        for rang, modele in enumerate(chaine):
+            secours = rang + 1 < len(chaine)
+            yield {"type": "modele", "id": modele["id"], "nom": modele["nom"]}
             try:
                 async for ev in _tentative(http, modele, secours, systeme, historique, question,
                                            outils, executer):
@@ -150,7 +153,7 @@ async def repondre(question: str, historique: list[dict], valorisation: dict,
                 return
             except _Basculer:
                 yield {"type": "attente", "raison": "bascule", "secondes": 0,
-                       "modele": config.LLM_MODELS[rang + 1]}
+                       "modele": chaine[rang + 1]["nom"]}
 
 
 async def _tentative(http, modele, secours, systeme, historique, question, outils, executer):

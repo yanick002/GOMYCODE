@@ -14,6 +14,7 @@ from typing import Literal
 import httpx
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 import agent
@@ -37,6 +38,7 @@ async def cycle_de_vie(app: FastAPI):
 
 
 app = FastAPI(title="Portefeuille BRVM", lifespan=cycle_de_vie, docs_url=None, redoc_url=None)
+app.mount("/static", StaticFiles(directory=ICI / "static"), name="static")
 
 
 # ------------------------------------------------------------------ erreurs
@@ -85,6 +87,7 @@ class Message(BaseModel):
 class Question(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
     historique: list[Message] = Field(default_factory=list, max_length=20)
+    modele: str | None = Field(default=None, max_length=120)   # id du catalogue ; inconnu = defaut
 
 
 # ------------------------------------------------------------------ pages
@@ -105,7 +108,8 @@ async def configuration_publique():
     publishable est faite pour etre dans le navigateur."""
     return {"supabase_url": config.SUPABASE_URL,
             "supabase_key": config.SUPABASE_PUBLISHABLE_KEY,
-            "modeles": config.LLM_MODELS}
+            "modeles": config.catalogue_public(),
+            "defaut": config.MODELE_PAR_DEFAUT}
 
 
 @app.get("/api/tickers")
@@ -147,6 +151,23 @@ async def voir_portefeuille(request: Request, u: base.Utilisateur = Depends(util
     return await _valorisation(request.app.state.http, u)
 
 
+PERIODES = {"1m": 22, "3m": 66, "6m": 130, "1a": 260}   # en seances de bourse
+
+
+@app.get("/api/portefeuille/historique")
+async def historique_portefeuille(request: Request, periode: Literal["1m", "3m", "6m", "1a"] = "6m",
+                                  u: base.Utilisateur = Depends(utilisateur_courant)):
+    """Valeur des titres actuels seance par seance, pour la courbe du portefeuille."""
+    seances = PERIODES[periode]
+    positions = await base.lire_positions(request.app.state.http, u)
+    if not positions:
+        return {"dates": [], "total": [], "series": []}
+    async with marche.session_mcp() as session:
+        # quelques seances de plus : la cloture qui precede la fenetre sert de point de depart
+        cours = await marche.historiques(session, [p["ticker"] for p in positions], seances + 10)
+    return portefeuille.historique(positions, cours, seances)
+
+
 @app.put("/api/positions")
 async def enregistrer_position(p: Position, request: Request,
                                u: base.Utilisateur = Depends(utilisateur_courant)):
@@ -183,6 +204,7 @@ async def discuter(q: Question, request: Request, u: base.Utilisateur = Depends(
     reponse, erreur), pour que la page montre les appels au fur et a mesure."""
     http = request.app.state.http
     historique = [m.model_dump() for m in q.historique]
+    chaine = config.chaine(q.modele)
     file: asyncio.Queue = asyncio.Queue()
 
     # La session MCP vit dans une tache a part, qui la cree et la ferme
@@ -193,7 +215,7 @@ async def discuter(q: Question, request: Request, u: base.Utilisateur = Depends(
             async with marche.session_mcp() as session:
                 valorisation = await _valorisation(http, u, session)
                 async for evenement in agent.repondre(q.question, historique, valorisation,
-                                                      valorisation["date_seance"], session):
+                                                      valorisation["date_seance"], session, chaine):
                     await file.put(evenement)
         except (marche.MarcheIndisponible, agent.ErreurModele, base.NonAutorise) as e:
             await file.put({"type": "erreur", "message": str(e)})

@@ -97,6 +97,24 @@ async def cours(session: ClientSession, tickers: list[str]) -> dict[str, dict]:
     return {t: d for t, d in paires if d}
 
 
+async def historiques(session: ClientSession, tickers: list[str], seances: int) -> dict[str, list[tuple[str, float]]]:
+    """Cours de cloture des dernieres seances : {ticker: [(date, cloture), ...]}, du plus ancien au plus recent."""
+    async def un(t):
+        ok, texte = await appeler(session, "get_ticker_data", {"ticker": t, "period": "daily", "limit": seances})
+        if not ok:
+            return t, []
+        points = []
+        for ligne in texte.strip().splitlines()[1:]:          # entete : Date,Open,High,Low,Close,Volume
+            champs = ligne.split(",")
+            try:
+                points.append((champs[0], float(champs[4])))
+            except (IndexError, ValueError):
+                continue
+        return t, points
+
+    return dict(await asyncio.gather(*[un(t) for t in tickers]))
+
+
 async def date_seance(session: ClientSession) -> str | None:
     """Date de la derniere seance, lue sur le BRVM Composite."""
     ok, texte = await appeler(session, "get_ticker_data", {"ticker": "BRVMC", "period": "daily", "limit": 1})

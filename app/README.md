@@ -17,6 +17,7 @@ Navigateur ── FastAPI (ce dossier) ──┬── Supabase : comptes + port
 | `portefeuille.py` | valorisation (valeur, plus-value, poids), en Python |
 | `marche.py` | connexion au MCP : cours du jour, outils pour le modèle |
 | `agent.py` | boucle question → modèle → outils → réponse |
+| `modeles.json` | catalogue des modèles proposés dans le menu |
 | `static/index.html` | la page |
 | `schema.sql` | tables et règles d'accès Supabase |
 
@@ -32,11 +33,11 @@ Navigateur ── FastAPI (ce dossier) ──┬── Supabase : comptes + port
    dans **Site URL** (`http://localhost:8080` en local, l'adresse Render ensuite).
    C'est vers elle que pointe le lien de confirmation envoyé par e-mail.
 
-### 2. Le modèle
+### 2. Les modèles
 
-Créer une clé chez un fournisseur compatible OpenAI (Groq, OpenRouter,
-Together…) et choisir un modèle qui sait **appeler des outils**
-(« tool use » ou « function calling » dans la liste du fournisseur).
+Mettre dans `.env` la clé d'au moins un fournisseur déclaré dans `modeles.json`
+(`GEMINI_API_KEY`, `NVIDIA_API_KEY`…). Les modèles d'un fournisseur sans clé
+n'apparaissent pas dans le menu.
 
 ### 3. Lancer en local
 
@@ -47,17 +48,22 @@ pip install -r requirements.txt
 python main.py            # http://localhost:8080
 ```
 
-## Changer de modèle
+## Choisir et ajouter des modèles
 
-Modifier trois variables, sans toucher au code, puis redémarrer :
+L'utilisateur choisit le modèle dans le menu de la zone de saisie ; son choix
+est retenu par le navigateur. La réponse affiche le logo et le nom du modèle
+qui a réellement répondu : si le modèle choisi est saturé ou hors quota, la
+question repart avec les autres modèles **du même fournisseur**.
 
-```
-LLM_BASE_URL=https://openrouter.ai/api/v1
-LLM_MODEL=<nom exact du modèle chez ce fournisseur>
-LLM_API_KEY=<clé>
-```
+Le catalogue est `modeles.json`, sans toucher au code :
 
-Le nom du modèle en cours s'affiche en haut de la page.
+- **Ajouter un modèle** : une ligne dans `modeles`, avec son identifiant exact
+  chez le fournisseur. Il doit savoir appeler des outils (function calling).
+- **Ajouter un fournisseur** : une entrée dans `fournisseurs` avec son URL
+  compatible OpenAI, le nom de la variable de sa clé, un logo (fichier SVG
+  dans `static/logos/`, par exemple depuis [Simple Icons](https://simpleicons.org))
+  et sa couleur. Puis la clé dans `.env`.
+- **Modèle par défaut** : le premier de la liste dont la clé est définie.
 
 ## Déployer sur Render
 

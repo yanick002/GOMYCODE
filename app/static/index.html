@@ -97,9 +97,15 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
 .item .pastille{width:7px;height:7px;border-radius:50%;flex:none;margin-left:2px}
 .item.actif{background:var(--app);color:var(--ink);font-weight:500;box-shadow:var(--ombre-m);border-color:var(--line)}
 .item.actif::before{content:"";position:absolute;left:-21px;top:50%;transform:translateY(-50%);width:3px;height:18px;border-radius:0 3px 3px 0;background:var(--ink)}
-.resume{margin:6px 20px 0;padding:10px 12px;border-radius:10px;background:var(--sunk);font-size:12px;color:var(--ink-2);display:grid;gap:2px}
+/* résumé du portefeuille : cliquable, il ouvre le panneau */
+.resume{display:grid;gap:3px;width:calc(100% - 40px);margin:6px 20px 0;padding:10px 12px;border-radius:10px;background:var(--sunk);
+  border:1px solid transparent;font-size:12px;color:var(--ink-2);text-align:left;transition:border-color .15s,background .15s}
+.resume:hover{border-color:var(--line);background:var(--hover)}
 .resume .ligne{display:flex;justify-content:space-between;gap:8px}
 .resume b{font-weight:600;color:var(--ink)}
+.resume .mini{display:flex;height:4px;border-radius:2px;overflow:hidden;margin-top:7px;background:var(--line)}
+.resume .mini span{height:100%;background:var(--n)}
+.resume .mini span + span{border-left:1px solid var(--sunk)}
 .creux{flex:1;min-height:14px}
 .profil{display:flex;align-items:center;gap:10px;padding:14px 20px 0;margin-top:12px}
 .avatar{width:32px;height:32px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--noir);color:var(--sur-noir);font-weight:600;font-size:12.5px}
@@ -111,8 +117,9 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
 .barre-mobile{display:none}
 #voile-rail{display:none}
 @media (max-width:900px){
-  #rail{position:fixed;top:0;left:0;bottom:0;z-index:30;box-shadow:var(--ombre-l);transform:translateX(-105%);transition:transform .2s ease-out}
-  body.rail-ouvert #rail{transform:none}
+  #rail{position:fixed;top:0;left:0;bottom:0;z-index:30;transform:translateX(-105%);transition:transform .2s ease-out}
+  body.rail-ouvert #rail{transform:none;box-shadow:var(--ombre-l)}
+  .item .kbd,.pieds .indice{display:none}
   body.rail-ouvert #voile-rail{display:block;position:fixed;inset:0;background:rgba(9,9,11,.44);z-index:29}
   .barre-mobile{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
   .barre-mobile .marque{padding:0;flex:1}
@@ -140,8 +147,29 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
 .boite{background:var(--sunk);border-radius:14px;padding:12px;border:1px solid transparent;transition:border-color .14s,background .14s}
 .boite:focus-within{border-color:var(--line);background:var(--hover)}
 .haut{display:flex;align-items:flex-start;gap:8px}
-.modele{display:flex;align-items:center;gap:5px;flex:none;margin-top:1px;background:var(--app);border:1px solid var(--line);
-  border-radius:7px;padding:3px 7px;font-size:11px;font-weight:500;color:var(--ink-2);max-width:45%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+/* logos des fournisseurs : icone monochrome teintee a la couleur de la marque */
+.logo{display:inline-block;flex:none;width:14px;height:14px;background:var(--c,currentColor);
+  -webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}
+
+/* choix du modele */
+.choix{position:relative;flex:none;max-width:48%;margin-top:1px}
+.modele{display:flex;align-items:center;gap:6px;max-width:100%;background:var(--app);border:1px solid var(--line);
+  border-radius:7px;padding:3px 7px;font-size:11px;font-weight:500;color:var(--ink-2);white-space:nowrap}
+.modele:hover,.modele[aria-expanded="true"]{color:var(--ink);border-color:var(--ink-3)}
+.modele #modele-nom{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.modele .chev{opacity:.6;flex:none}
+.menu{position:absolute;bottom:calc(100% + 8px);left:0;background:var(--app);border:1px solid var(--line);border-radius:12px;
+  box-shadow:var(--ombre-l);padding:5px;width:max-content;min-width:260px;max-width:min(340px,86vw);max-height:340px;overflow-y:auto;z-index:50}
+.menu.bas{bottom:auto;top:calc(100% + 8px)}
+.menu h6{margin:0;padding:8px 9px 5px;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:7px 9px;border:0;background:none;
+  border-radius:7px;font-size:12.5px;color:var(--ink-2);line-height:1.35}
+.menu button:hover,.menu button:focus-visible{background:var(--hover);color:var(--ink);outline:none}
+.menu button .txt{flex:1;min-width:0}
+.menu button small{display:block;font-size:11px;color:var(--ink-3)}
+.menu button .coche{visibility:hidden;color:var(--ink);display:flex}
+.menu button[aria-checked="true"]{color:var(--ink);font-weight:500}
+.menu button[aria-checked="true"] .coche{visibility:visible}
 #question{flex:1;min-width:0;border:none;background:none;resize:none;outline:none;font:inherit;font-size:14px;line-height:1.55;
   color:var(--ink);min-height:64px;max-height:190px;padding:2px 0 0}
 #question::placeholder{color:var(--ink-3)}
@@ -150,17 +178,10 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
 .env{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex:none;border:0;background:var(--noir);color:var(--sur-noir);transition:opacity .14s}
 .env:hover:not(:disabled){opacity:.82}
 .env:disabled{background:var(--line);color:var(--ink-3);cursor:not-allowed}
-.zone-bas{flex:none;padding:8px 0 0}
+.zone-bas{flex:none;padding:8px 0 18px;position:relative;z-index:5}
 .zone-bas #zone{max-width:var(--large);margin:0 auto;padding:0 24px}
 .zone-bas #question{min-height:44px}
 
-/* ligne d'état */
-.pied{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-3);padding:10px 24px 14px;flex:none}
-.pied i{display:flex;align-items:center;gap:6px;font-style:normal}
-.pied .pt{width:6px;height:6px;border-radius:50%;background:var(--ink-3)}
-.pied .pt.ok{background:var(--vert)} .pied .pt.ko{background:var(--rouge)}
-.pied .sep{width:3px;height:3px;border-radius:50%;background:var(--line)}
-.pied code{font-family:"IBM Plex Mono",monospace;font-size:10.5px}
 
 /* messages */
 .tour{margin-bottom:24px}
@@ -189,34 +210,221 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
 @keyframes clign{0%,50%{opacity:1}51%,100%{opacity:0}}
 .alerte-msg{background:var(--sunk);color:var(--rouge);padding:10px 13px;border-radius:10px;font-size:12.5px}
 
-/* ============================ panneau portefeuille ============================ */
-#voile{position:fixed;inset:0;background:rgba(9,9,11,.44);z-index:40}
-#panneau{position:fixed;top:0;right:0;bottom:0;width:min(780px,100vw);background:var(--app);border-left:1px solid var(--line);
-  box-shadow:var(--ombre-l);z-index:41;overflow-y:auto;padding:18px 20px 24px;animation:glisse .18s ease-out}
-@keyframes glisse{from{transform:translateX(32px);opacity:0}}
-@media (prefers-reduced-motion:reduce){#panneau,.attente::after,.outil .spin{animation:none}}
-.panneau-tete{display:flex;align-items:center;gap:8px;margin-bottom:14px}
-.panneau-tete h2{font-size:16px;margin:0;flex:1;letter-spacing:-.02em}
-.alerte{background:var(--sunk);border-left:3px solid var(--ambre);border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:13px}
-.tuiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
-@media (max-width:560px){.tuiles{grid-template-columns:minmax(0,1fr)}}
-.tuile{background:var(--sunk);border-radius:10px;padding:10px 12px;min-width:0}
-.tuile .titre{font-size:12px;color:var(--ink-2)}
-.tuile .valeur{font-size:18px;font-weight:600;overflow-wrap:anywhere}
-.tuile .sous{font-size:12px;color:var(--ink-2)}
-.tuile form{display:flex;gap:6px;margin-top:4px}
-.tuile form input{padding:4px 8px}
-.tuile form .bouton{padding:4px 10px}
-.tableau{overflow-x:auto;margin:0 -4px}
-table.lignes{width:100%;border-collapse:collapse;font-size:13px}
-table.lignes th{font-weight:500;color:var(--ink-2);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
-table.lignes td{text-align:right;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
-table.lignes th:first-child,table.lignes td:first-child{text-align:left}
-td.titre{font-weight:600}
-.vide{color:var(--ink-3);text-align:center!important;padding:24px}
-form.ajout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end;margin-top:14px}
-form.ajout label{margin-top:0}
-@media (max-width:560px){form.ajout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+/* ============================ fenêtre portefeuille ============================ */
+:root{--menthe:#14B8A6;--menthe-fonce:#0F766E;--menthe-fond:#CCFBF1;--petrole:#0B3A3B;--petrole-clair:#13605E;
+  --fond-pf:#F2F3F5;--point:#DADDE3;--tiret:#D3D7DD;--carte:#FFFFFF;
+  --ombre-carte:0 1px 2px rgba(16,24,40,.04),0 24px 48px -20px rgba(16,24,40,.2)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--menthe:#2DD4BF;--menthe-fonce:#5EEAD4;
+  --menthe-fond:rgba(45,212,191,.15);--petrole:#0D4344;--petrole-clair:#177371;--fond-pf:#0B0C0E;--point:#1F2227;
+  --tiret:#2B2F36;--carte:#141518;--ombre-carte:0 1px 2px rgba(0,0,0,.5),0 24px 48px -20px rgba(0,0,0,.85)}}
+:root[data-theme="dark"]{--menthe:#2DD4BF;--menthe-fonce:#5EEAD4;--menthe-fond:rgba(45,212,191,.15);--petrole:#0D4344;
+  --petrole-clair:#177371;--fond-pf:#0B0C0E;--point:#1F2227;--tiret:#2B2F36;--carte:#141518;
+  --ombre-carte:0 1px 2px rgba(0,0,0,.5),0 24px 48px -20px rgba(0,0,0,.85)}
+
+#voile{position:fixed;inset:0;background:rgba(15,23,42,.38);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  z-index:40;animation:fondu .25s ease-out}
+@keyframes fondu{from{opacity:0}}
+.pf2{position:fixed;inset:18px;z-index:41;border-radius:26px;overflow-y:auto;overscroll-behavior:contain;
+  background-color:var(--fond-pf);background-image:radial-gradient(var(--point) 1px,transparent 1.3px);background-size:14px 14px;
+  box-shadow:0 40px 90px -24px rgba(15,23,42,.5);animation:surgit .42s cubic-bezier(.2,.8,.2,1)}
+@keyframes surgit{from{opacity:0;transform:translateY(18px) scale(.985)}}
+@media (max-width:900px){.pf2{inset:0;border-radius:0}}
+
+.pf2-tete{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:12px;padding:16px 22px 26px;
+  background:linear-gradient(var(--fond-pf) 60%,transparent)}
+.insigne{width:42px;height:42px;border-radius:13px;flex:none;display:grid;place-items:center;color:#E6FFFA;
+  background:linear-gradient(165deg,var(--petrole-clair),var(--petrole));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 1px rgba(255,255,255,.06),0 10px 20px -8px rgba(11,58,59,.65)}
+.pf2-tete .titre{flex:1;min-width:0}
+.pf2-tete h2{margin:0;font-size:16px;font-weight:600;letter-spacing:-.01em}
+.pf2-tete p{margin:1px 0 0;font-size:12px;color:var(--ink-3)}
+.bouton-carte{width:38px;height:38px;border-radius:11px;flex:none;display:grid;place-items:center;border:1px solid var(--line);
+  background:var(--carte);color:var(--ink-2);box-shadow:var(--ombre-s);transition:color .15s,transform .15s,box-shadow .15s}
+.bouton-carte:hover{color:var(--ink);transform:translateY(-1px);box-shadow:var(--ombre-m)}
+.pf2 .alerte{max-width:1000px;margin:0 auto 6px;background:var(--carte);border:1px solid var(--line);border-left:3px solid var(--ambre);
+  border-radius:10px;padding:9px 13px;font-size:12.5px;color:var(--ink-2)}
+
+/* la scène : une carte principale, des cartes flottantes autour */
+.scene{position:relative;display:grid;grid-template-columns:minmax(230px,1fr) minmax(0,580px) minmax(230px,1fr);gap:30px;
+  align-items:center;max-width:1260px;margin:0 auto;padding:40px 36px 34px}
+.scene::before{content:"";position:absolute;inset:0 9%;border:1.5px dashed var(--tiret);border-radius:48px;pointer-events:none}
+@media (max-width:1150px){.scene{grid-template-columns:minmax(0,1fr) minmax(0,1fr);max-width:820px}
+  .carte-principale{grid-column:1/-1;order:-1}.scene::before{inset:0 3%}}
+@media (max-width:640px){.scene{grid-template-columns:minmax(0,1fr);gap:18px;padding:6px 14px 22px}.scene::before{display:none}}
+.carte{position:relative;background:var(--carte);border:1px solid var(--line);border-radius:22px;box-shadow:var(--ombre-carte)}
+.carte h3{margin:0;font-size:13.5px;font-weight:600;letter-spacing:-.005em}
+.cote{padding:18px 20px 20px}
+.colonne-cote{display:grid;gap:34px;align-content:center}
+@media (max-width:640px){.colonne-cote{gap:18px}}
+.empile{margin-bottom:12px}
+.empile::after{content:"";position:absolute;left:16px;right:16px;bottom:-12px;height:28px;z-index:-1;background:var(--carte);
+  border:1px solid var(--line);border-radius:0 0 18px 18px;box-shadow:var(--ombre-carte)}
+.cote-tete{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cote-info{font-size:11.5px;color:var(--ink-3)}
+.cote-montant{margin:16px 0 0;font-size:23px;font-weight:700;letter-spacing:-.025em;font-variant-numeric:tabular-nums;line-height:1.2}
+.cote-pied{margin:9px 0 0;font-size:11.5px;color:var(--ink-3);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lien-menthe{border:0;background:none;padding:2px 0;font-size:12.5px;font-weight:500;color:var(--menthe-fonce)}
+.lien-menthe:hover{text-decoration:underline;text-underline-offset:3px}
+.pastille-m{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:7px;font-size:12px;font-weight:600;
+  font-variant-numeric:tabular-nums;color:var(--menthe-fonce);background:var(--menthe-fond);white-space:nowrap}
+.pastille-m.baisse{color:var(--rouge);background:color-mix(in srgb,var(--rouge) 12%,transparent)}
+.pastille-m.neutre{color:var(--ink-2);background:var(--sunk)}
+
+/* carte principale : total et courbe */
+.carte-principale{padding:22px 24px 16px;overflow:hidden;
+  background-image:radial-gradient(85% 55% at 100% 0%,color-mix(in srgb,var(--menthe) 17%,transparent),transparent 72%)}
+.cp-tete{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.periodes{display:flex;gap:2px;padding:3px;border-radius:10px;background:var(--sunk)}
+.periodes button{border:0;background:none;padding:3px 9px;border-radius:7px;font-size:11.5px;font-weight:500;color:var(--ink-3);
+  transition:color .15s,background .15s}
+.periodes button:hover{color:var(--ink)}
+.periodes button[aria-selected="true"]{background:var(--carte);color:var(--ink);box-shadow:var(--ombre-s)}
+.cp-total{display:flex;align-items:center;gap:8px;margin-top:10px}
+.cp-total .montant{font-size:34px;font-weight:700;letter-spacing:-.035em;font-variant-numeric:tabular-nums;line-height:1.1}
+.cp-total small{font-size:14px;font-weight:600;color:var(--ink-3);align-self:flex-end;margin-bottom:5px}
+.oeil{border:0;background:none;color:var(--ink-3);padding:5px;border-radius:8px;display:grid;place-items:center}
+.oeil:hover{color:var(--ink);background:var(--sunk)}
+.oeil .ferme,.pf2.masque .oeil .ouvert{display:none}
+.pf2.masque .oeil .ferme{display:block}
+.cp-evol{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:12.5px;color:var(--ink-3);min-height:22px}
+
+.graphe{position:relative;margin-top:14px;border-radius:12px;outline:none}
+.graphe:focus-visible{box-shadow:0 0 0 2px var(--menthe)}
+.graphe svg{display:block;width:100%;height:auto;overflow:visible;touch-action:pan-y}
+.graphe .grille{stroke:var(--line);stroke-dasharray:4 5}
+.graphe text{font:11px Inter,"Segoe UI",system-ui,sans-serif;fill:var(--ink-3)}
+.graphe .ligne{fill:none;stroke:var(--menthe);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.graphe .ligne.trace{stroke-dasharray:var(--long);stroke-dashoffset:var(--long);animation:trace 1.3s cubic-bezier(.3,.7,.2,1) forwards}
+@keyframes trace{to{stroke-dashoffset:0}}
+.graphe .aire{animation:fondu 1s .35s both}
+.graphe .curseur{stroke:var(--ink);stroke-width:1.2;stroke-dasharray:3 4}
+.graphe .point{fill:var(--carte);stroke:var(--ink);stroke-width:2}
+.graphe-vide{height:190px;display:grid;place-items:center;text-align:center;color:var(--ink-3);font-size:12.5px;padding:0 20px}
+.bulle-graphe{position:absolute;top:2px;transform:translateX(-50%);padding:10px 14px 12px;background:var(--carte);
+  border:1px solid var(--line);border-radius:14px;box-shadow:var(--ombre-carte);pointer-events:none;z-index:2;white-space:nowrap}
+.bulle-graphe .date{font-size:11.5px;color:var(--ink-3)}
+.bulle-graphe .valeurs{display:flex;gap:18px;margin-top:6px}
+.bulle-graphe .v small{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2)}
+.bulle-graphe .v small::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c)}
+.bulle-graphe .v b{display:block;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:1px}
+.bulle-graphe .tot{display:flex;justify-content:space-between;gap:14px;margin-top:8px;padding-top:7px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--ink-2)}
+.bulle-graphe .tot b{font-variant-numeric:tabular-nums;color:var(--ink)}
+.cp-note{margin:6px 0 0;font-size:11.5px;color:var(--ink-3)}
+
+/* répartition : barres rayées */
+.rep{display:grid;margin-top:8px}
+.rep-ligne{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 6px;margin:0 -6px;width:calc(100% + 12px);
+  border-radius:10px;cursor:pointer;transition:opacity .2s,background .15s}
+.rep-ligne:hover{background:var(--sunk)}
+.rep-ligne + .rep-ligne{border-top:1px dashed var(--line);border-radius:0 0 10px 10px}
+.rep-tete{display:flex;align-items:baseline;gap:8px;font-size:13px}
+.rep-tete b{font-weight:600}
+.rep-tete .montant{margin-left:auto;font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.rayure{position:relative;display:block;height:18px;margin-top:6px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.rayure > span{position:absolute;inset:0 auto 0 0;width:0;border-radius:99px;
+  background:repeating-linear-gradient(-45deg,var(--c) 0 7px,color-mix(in srgb,var(--c) 72%,var(--carte)) 7px 14px);
+  transition:width 1s cubic-bezier(.2,.8,.2,1) calc(var(--i,0) * 90ms + .1s)}
+.rayure.liq > span{background:repeating-linear-gradient(-45deg,var(--ink-3) 0 2px,transparent 2px 6px)}
+.rayure em{position:absolute;top:0;bottom:0;display:flex;align-items:center;font-style:normal;font-size:10.5px;font-weight:600;
+  color:var(--ink-2);padding:0 7px;font-variant-numeric:tabular-nums;animation:fondu .4s calc(var(--i,0) * 90ms + .8s) both}
+.rayure em.dedans{color:#083B38}
+.rayure em.clair{color:#F0FDFA}
+.cote-vide{margin:14px 0 0;font-size:12.5px;color:var(--ink-3)}
+.pf2.focalise .rep-ligne:not(.actif){opacity:.35}
+
+/* appel à l'assistant */
+.cta{display:flex;justify-content:center;margin:8px 16px 36px}
+.bouton-petrole{display:flex;align-items:center;gap:12px;padding:11px 24px 11px 16px;border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);color:#F0FDFA;text-align:left;
+  background:linear-gradient(165deg,var(--petrole-clair),var(--petrole) 72%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 14px 30px -12px rgba(11,58,59,.75);transition:transform .18s,box-shadow .18s}
+.bouton-petrole:hover{transform:translateY(-2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 22px 38px -14px rgba(11,58,59,.8)}
+.bouton-petrole:active{transform:none}
+.bouton-petrole svg{color:#5EEAD4}
+.bouton-petrole b{display:block;font-size:14.5px;font-weight:600;line-height:1.3}
+.bouton-petrole small{display:block;font-size:12.5px;opacity:.8}
+
+/* mes titres */
+.pf2-titres{max-width:1000px;margin:0 auto 44px;padding:20px 22px 16px}
+@media (max-width:640px){.pf2-titres{margin:0 14px 30px;padding:16px 14px 12px}}
+.pf-section-tete{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.pf-section-tete .compte{color:var(--ink-3);font-weight:500;margin-left:3px}
+.bouton.petit{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;font-size:12.5px;font-weight:500}
+.bouton.petit[aria-expanded="true"]{background:var(--hover)}
+.bouton.petit svg{transition:transform .25s}
+.bouton.petit[aria-expanded="true"] svg{transform:rotate(45deg)}
+
+.depliant{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s cubic-bezier(.2,.8,.2,1)}
+.depliant.ouvert{grid-template-rows:1fr}
+.depliant > div{overflow:hidden;min-height:0}
+
+.pf-liste{list-style:none;margin:0;padding:0}
+.pos{border-bottom:1px solid var(--line);transition:opacity .2s,transform .22s}
+.pos:first-child{border-top:1px solid var(--line)}
+.pos.liq{margin-top:14px;border-top:1px solid var(--line)}
+.pos-tete{display:grid;grid-template-columns:10px minmax(0,1fr) auto 50px 14px;align-items:center;gap:12px;width:100%;
+  padding:12px 8px;border:0;background:none;text-align:left;border-radius:8px;cursor:pointer;transition:background .15s,opacity .2s}
+.pos-tete:hover,.pos.actif .pos-tete,.pos.ouvert .pos-tete{background:var(--hover)}
+.pf2.focalise .pos:not(.actif):not(.ouvert) .pos-tete{opacity:.5}
+.nuance{width:10px;height:10px;border-radius:3px;background:var(--n,var(--line))}
+.nuance.liquide{background:repeating-linear-gradient(135deg,var(--ink-2) 0 1.5px,transparent 1.5px 3.5px);box-shadow:inset 0 0 0 1px var(--ink-3)}
+.pos-nom b{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;line-height:1.3}
+.pos-nom small,.pos-val small{display:block;font-size:11.5px;color:var(--ink-3);line-height:1.4;white-space:nowrap}
+.pos-val{text-align:right}
+.pos-val b{font-size:13px;font-weight:500}
+.pos-val small.hausse{color:var(--vert)} .pos-val small.baisse{color:var(--rouge)}
+.pos-poids{text-align:right;font-size:12px;color:var(--ink-2)}
+.pos-tete .chev{color:var(--ink-3);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.pos.ouvert .pos-tete .chev{transform:rotate(180deg);color:var(--ink)}
+.badge{font-size:10.5px;font-weight:500;color:var(--ambre);background:color-mix(in srgb,var(--ambre) 14%,transparent);
+  padding:1px 7px;border-radius:99px;letter-spacing:.01em}
+@media (max-width:560px){.pos-tete{grid-template-columns:10px minmax(0,1fr) auto 14px;gap:10px}.pos-poids{display:none}}
+
+.pos-detail{padding:6px 8px 18px 30px}
+@media (max-width:560px){.pos-detail{padding-left:8px}}
+.pos-faits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 14px}
+.pos-faits div{background:var(--sunk);border-radius:8px;padding:8px 10px;min-width:0}
+.pos-faits dt{font-size:11px;color:var(--ink-3)}
+.pos-faits dd{margin:0;font-size:13px;font-weight:500}
+.pos-faits dd small{display:block;font-size:11px;font-weight:400;font-family:Inter,"Segoe UI",system-ui,sans-serif}
+@media (max-width:560px){.pos-faits{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+
+.pf-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end}
+.pf-form label{margin:0 0 4px}
+.pf-form .bouton{padding:8px 14px}
+#pf-form-ajout{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,1fr) auto;padding:14px;background:var(--sunk);
+  border-radius:12px;margin:2px 0 12px}
+#pf-form-ajout input{background:var(--app)}
+@media (max-width:560px){.pf-form,#pf-form-ajout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.pf-form .bouton{grid-column:1/-1}}
+.pf-aide{grid-column:1/-1;margin:0;font-size:11.5px;color:var(--ink-3)}
+
+.pos-retrait{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;min-height:30px}
+.lien.danger{color:var(--rouge);padding:4px 0}
+.lien.danger:hover{text-decoration:underline;text-underline-offset:3px}
+.bouton.danger{background:var(--rouge);border-color:var(--rouge);color:#fff}
+.bouton.danger:hover{opacity:.9;background:var(--rouge)}
+
+.pf-vide{border:1px dashed var(--line);border-radius:12px;padding:26px 20px;text-align:center;margin-bottom:6px}
+.pf-vide p{margin:0 auto 14px;max-width:34ch;font-size:13px;color:var(--ink-2)}
+.squelette{height:50px;border-radius:8px;margin-bottom:6px;
+  background:linear-gradient(90deg,var(--sunk) 0%,var(--hover) 50%,var(--sunk) 100%);background-size:200% 100%;animation:miroir 1.3s linear infinite}
+@keyframes miroir{to{background-position:-200% 0}}
+#message-position{margin-top:10px}
+@keyframes eclat{from{background:color-mix(in srgb,var(--menthe) 22%,transparent)}}
+.pos.eclat .pos-tete{animation:eclat 1.6s ease-out}
+.pos.sortie{opacity:0;transform:translateX(18px)}
+
+/* montants masqués */
+.pf2 .montant,.pf2 .pos-val,.pf2 .pos-nom small,.pf2 .bulle-graphe b,.pf2 .graphe text.y{transition:filter .25s}
+.pf2.masque .montant,.pf2.masque .pos-val,.pf2.masque .pos-nom small,.pf2.masque .bulle-graphe b,
+.pf2.masque .graphe text.y,.pf2.masque .pos-faits dd{filter:blur(7px)}
+
+@media (prefers-reduced-motion:reduce){
+  .pf2,#voile,.depliant,.pos,.pos-tete,.pos-tete .chev,.squelette,.pos.eclat .pos-tete,.bouton.petit svg,.rayure > span,
+  .rayure em,.graphe .aire,.bouton-petrole,.bouton-carte,.attente::after,.outil .spin{animation:none!important;transition:none!important}
+  .graphe .ligne.trace{stroke-dasharray:none;stroke-dashoffset:0}
+}
 </style>
 </head>
 <body>
@@ -258,15 +466,6 @@ form.ajout label{margin-top:0}
     </div>
     <div class="filet"></div>
 
-    <div class="label">Conversation</div>
-    <div class="liste">
-      <button class="item actif" id="nouvelle">
-        <span class="txt">Nouvelle conversation</span>
-        <span class="fin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>
-      </button>
-      <div class="item" id="conv-courante" hidden><span class="txt" id="conv-titre"></span></div>
-    </div>
-
     <div class="label">Espace</div>
     <div class="liste">
       <button class="item" id="ouvrir-portefeuille" aria-haspopup="dialog" aria-controls="panneau">
@@ -275,11 +474,12 @@ form.ajout label{margin-top:0}
         <span class="kbd">Ctrl 1</span>
       </button>
     </div>
-    <div class="resume" id="resume" hidden>
-      <div class="ligne"><span>Valeur totale</span><b class="mono" id="r-total">—</b></div>
-      <div class="ligne"><span>Plus-value</span><span class="mono" id="r-pv">—</span></div>
-      <div class="ligne"><span>Liquidités</span><span class="mono" id="r-liq">—</span></div>
-    </div>
+    <button class="resume" id="resume" aria-haspopup="dialog" aria-controls="panneau" hidden>
+      <span class="ligne"><span>Valeur totale</span><b class="mono" id="r-total">—</b></span>
+      <span class="ligne"><span>Plus-value</span><span class="mono" id="r-pv">—</span></span>
+      <span class="ligne"><span>Liquidités</span><span class="mono" id="r-liq">—</span></span>
+      <span class="mini" id="r-barre" aria-hidden="true"></span>
+    </button>
 
     <div class="creux"></div>
     <div class="liste">
@@ -319,10 +519,15 @@ form.ajout label{margin-top:0}
           <form id="zone">
             <div class="boite">
               <div class="haut">
-                <span class="modele" id="modele" title="Modèle utilisé">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="13" width="4.4" height="8" rx="1.4" fill="currentColor" opacity=".32"/><rect x="9.8" y="8" width="4.4" height="13" rx="1.4" fill="currentColor" opacity=".62"/><rect x="16.6" y="3" width="4.4" height="18" rx="1.4" fill="currentColor"/></svg>
-                  <span id="modele-nom">…</span>
-                </span>
+                <div class="choix">
+                  <button type="button" class="modele" id="choix-modele" aria-haspopup="menu" aria-expanded="false"
+                          aria-controls="menu-modeles" title="Choisir le modèle">
+                    <span class="logo" id="modele-logo" aria-hidden="true"></span>
+                    <span id="modele-nom">…</span>
+                    <svg class="chev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                  <div class="menu" id="menu-modeles" role="menu" aria-label="Modèles" hidden></div>
+                </div>
                 <textarea id="question" placeholder="Pose ta question…" maxlength="2000" rows="1" aria-label="Ta question"></textarea>
               </div>
               <div class="pieds">
@@ -353,64 +558,94 @@ form.ajout label{margin-top:0}
 
     <div class="zone-bas" id="zone-bas"></div>
 
-    <div class="pied" id="pied">
-      <i><span class="pt ok"></span>Compte</i>
-      <span class="sep"></span>
-      <i><span class="pt" id="pt-donnees"></span>Données BRVM <code id="etat-donnees">…</code></i>
-      <span class="sep"></span>
-      <i><span class="pt ok"></span>Modèle <code id="etat-modele">…</code></i>
-    </div>
   </main>
 </div>
 
 <!-- ============================ portefeuille ============================ -->
 <div id="voile" hidden></div>
-<aside id="panneau" role="dialog" aria-modal="true" aria-labelledby="titre-panneau" hidden>
-  <div class="panneau-tete">
-    <h2 id="titre-panneau">Mon portefeuille</h2>
-    <button class="rond" id="fermer-panneau" aria-label="Fermer le portefeuille" title="Fermer (Échap)">
+<div id="panneau" class="pf2" role="dialog" aria-modal="true" aria-labelledby="titre-panneau" hidden>
+  <header class="pf2-tete">
+    <span class="insigne"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="13" width="4.4" height="8" rx="1.4" fill="currentColor" opacity=".45"/><rect x="9.8" y="8" width="4.4" height="13" rx="1.4" fill="currentColor" opacity=".72"/><rect x="16.6" y="3" width="4.4" height="18" rx="1.4" fill="currentColor"/></svg></span>
+    <div class="titre">
+      <h2 id="titre-panneau">Mon portefeuille</h2>
+      <p id="pf-seance"></p>
+    </div>
+    <button class="bouton-carte" id="fermer-panneau" aria-label="Fermer le portefeuille" title="Fermer (Échap)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
+  </header>
+  <div class="alerte" id="alerte-marche" role="status" hidden></div>
+
+  <div class="scene">
+    <section class="carte cote empile" aria-labelledby="rep-titre">
+      <div class="cote-tete"><h3 id="rep-titre">Répartition</h3><span class="cote-info" id="rep-info"></span></div>
+      <div class="rep" id="pf-repartition"></div>
+    </section>
+
+    <section class="carte carte-principale" aria-labelledby="cp-titre">
+      <div class="cp-tete">
+        <h3 id="cp-titre">Valeur totale</h3>
+        <div class="periodes" role="tablist" aria-label="Période de la courbe">
+          <button role="tab" data-periode="1m" aria-selected="false">1 M</button>
+          <button role="tab" data-periode="3m" aria-selected="false">3 M</button>
+          <button role="tab" data-periode="6m" aria-selected="true">6 M</button>
+          <button role="tab" data-periode="1a" aria-selected="false">1 an</button>
+        </div>
+      </div>
+      <div class="cp-total">
+        <span class="montant" id="pf-total">—</span><small>FCFA</small>
+        <button class="oeil" id="pf-oeil" aria-pressed="false" aria-label="Masquer les montants" title="Masquer les montants"><svg class="ouvert" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ferme" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button>
+      </div>
+      <div class="cp-evol"><span class="pastille-m" id="pf-evol" hidden></span><span id="pf-evol-lib"></span></div>
+      <div class="graphe" id="pf-graphe" tabindex="0" aria-label="Courbe de la valeur des titres. Flèches gauche et droite pour parcourir les séances.">
+        <svg id="pf-svg" viewBox="0 0 560 230" aria-hidden="true" hidden></svg>
+        <div class="graphe-vide" id="pf-graphe-vide">Chargement de l'historique…</div>
+        <div class="bulle-graphe" id="pf-bulle" hidden></div>
+      </div>
+      <p class="cp-note">Valeur de tes titres actuels à chaque séance, à quantités constantes.</p>
+    </section>
+
+    <div class="colonne-cote">
+      <section class="carte cote" aria-labelledby="pv-titre">
+        <div class="cote-tete"><h3 id="pv-titre">Plus-value latente</h3></div>
+        <p class="cote-montant montant" id="pf-pv">—</p>
+        <p class="cote-pied"><span class="pastille-m" id="pf-pv-pct" hidden></span>par rapport à ton prix de revient</p>
+      </section>
+      <section class="carte cote empile" aria-labelledby="liq-titre">
+        <div class="cote-tete"><h3 id="liq-titre">Liquidités</h3><button type="button" class="lien-menthe" id="pf-liq-modifier">Modifier</button></div>
+        <p class="cote-montant montant" id="pf-liq">—</p>
+        <p class="cote-pied"><span class="pastille-m neutre" id="pf-liq-pct">—</span>du portefeuille, disponibles pour investir</p>
+      </section>
+    </div>
   </div>
-  <div class="alerte" id="alerte-marche" hidden></div>
-  <div class="tuiles">
-    <div class="tuile">
-      <div class="titre">Valeur totale</div>
-      <div class="valeur mono" id="t-total">—</div>
-      <div class="sous">titres + liquidités</div>
+
+  <div class="cta">
+    <button type="button" class="bouton-petrole" id="pf-analyser"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 2.5l1.6 4.7 4.7 1.6-4.7 1.6L10 15.1 8.4 10.4 3.7 8.8l4.7-1.6z"/><path d="M17.5 13l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" opacity=".75"/><path d="M5.5 16l.6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6z" opacity=".55"/></svg><span><b>Analyser mon portefeuille</b><small>Demander l'avis de l'assistant</small></span></button>
+  </div>
+
+  <section class="carte pf2-titres" aria-labelledby="pf-titres">
+    <div class="pf-section-tete">
+      <h3 id="pf-titres">Mes titres<span class="compte" id="pf-compte"></span></h3>
+      <button type="button" class="bouton petit" id="pf-ajouter" aria-expanded="false" aria-controls="pf-ajout"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Ajouter un titre</button>
     </div>
-    <div class="tuile">
-      <div class="titre">Plus-value latente</div>
-      <div class="valeur mono" id="t-pv">—</div>
-      <div class="sous mono" id="t-pv-pct"></div>
-    </div>
-    <div class="tuile">
-      <div class="titre">Liquidités</div>
-      <form id="form-liquidites">
-        <input id="liquidites" class="mono" type="number" min="0" step="1" aria-label="Liquidités en FCFA">
-        <button class="bouton">OK</button>
+    <div class="depliant" id="pf-ajout"><div inert>
+      <form class="pf-form" id="pf-form-ajout">
+        <div><label for="p-ticker">Titre</label><input id="p-ticker" list="liste-tickers" placeholder="ex. SNTS" required autocomplete="off" spellcheck="false"></div>
+        <div><label for="p-qte">Quantité</label><input id="p-qte" class="mono" type="number" min="1" step="1" required></div>
+        <div><label for="p-prix">Prix de revient</label><input id="p-prix" class="mono" type="number" min="0" step="any" required></div>
+        <button class="bouton plein">Ajouter</button>
+        <p class="pf-aide">Prix de revient : ce que tu as payé par titre, frais compris. Un titre déjà présent est mis à jour.</p>
       </form>
-      <div class="sous" id="t-liq-pct"></div>
+    </div></div>
+    <div class="pf-vide" id="pf-vide" hidden>
+      <p>Ton portefeuille est vide. Ajoute les titres que tu détiens pour que l'assistant puisse les analyser.</p>
+      <button type="button" class="bouton plein" id="pf-vide-ajouter">Ajouter un titre</button>
     </div>
-  </div>
-  <div class="tableau">
-    <table class="lignes">
-      <thead><tr>
-        <th>Titre</th><th>Qté</th><th>Prix de revient</th><th>Cours</th>
-        <th>Valeur</th><th>+/- value</th><th>Poids</th><th></th>
-      </tr></thead>
-      <tbody id="lignes"><tr><td colspan="8" class="vide">Chargement…</td></tr></tbody>
-    </table>
-  </div>
-  <form class="ajout" id="form-position">
-    <div><label for="p-ticker">Titre</label><input id="p-ticker" list="liste-tickers" placeholder="ex. SNTS" required autocomplete="off"></div>
-    <div><label for="p-qte">Quantité</label><input id="p-qte" class="mono" type="number" min="1" step="1" required></div>
-    <div><label for="p-prix">Prix de revient</label><input id="p-prix" class="mono" type="number" min="0" step="any" required></div>
-    <button class="bouton plein">Enregistrer</button>
-  </form>
+    <ul class="pf-liste" id="pf-liste"></ul>
+    <div class="message" id="message-position" role="status"></div>
+  </section>
   <datalist id="liste-tickers"></datalist>
-  <div class="message" id="message-position" role="status"></div>
-</aside>
+</div>
 
 <script>
 // ------------------------------------------------------------------ outils
@@ -420,7 +655,6 @@ const nombre = (n, d = 0) => n == null ? "—" : new Intl.NumberFormat("fr-FR", 
 const signe = (n, texte) => n == null ? "—" : (n > 0 ? "+" : "") + texte;
 const classeSigne = (n) => n == null || n === 0 ? "" : (n > 0 ? "hausse" : "baisse");
 function ecrire(el, texte, type) { el.textContent = texte || ""; el.className = "message" + (type ? " " + type : ""); }
-const MARQUE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="13" width="4.4" height="8" rx="1.4" fill="currentColor" opacity=".32"/><rect x="9.8" y="8" width="4.4" height="13" rx="1.4" fill="currentColor" opacity=".62"/><rect x="16.6" y="3" width="4.4" height="18" rx="1.4" fill="currentColor"/></svg>';
 
 // thème, retenu par navigateur
 try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
@@ -512,6 +746,7 @@ function afficher(session) {
   } else {
     fermerPortefeuille(false);
     nouvelleConversation();
+    pf = null;
     $("resume").hidden = true;
   }
 }
@@ -521,22 +756,37 @@ function fermerRail() { document.body.classList.remove("rail-ouvert"); }
 $("ouvrir-rail").onclick = () => document.body.classList.add("rail-ouvert");
 $("voile-rail").onclick = fermerRail;
 
-// ------------------------------------------------------------------ panneau portefeuille
+// ------------------------------------------------------------------ fenêtre portefeuille
 let declencheur = null;
+let pf = null;               // dernier portefeuille reçu
+let totalAffiche = 0;        // valeur affichée du total, point de départ du comptage
+let aEclairer = null;        // ligne à mettre en valeur au prochain affichage
+let listeEnAttente = null;   // mise à jour reportée pendant une saisie
+let repAnimee = false;       // les barres de répartition ne se remplissent qu'à l'ouverture
+let periode = "6m", histo = null;
+const mouvementReduit = matchMedia("(prefers-reduced-motion: reduce)");
+const TEINTES = ["#0F766E", "#14B8A6", "#2DD4BF", "#5EEAD4", "#99F6E4"];
+const DUREES = { "1m": "1 mois", "3m": "3 mois", "6m": "6 mois", "1a": "1 an" };
+
 function ouvrirPortefeuille(e) {
   declencheur = e && e.currentTarget ? e.currentTarget : $("ouvrir-portefeuille");
-  fermerRail();
-  $("voile").hidden = false; $("panneau").hidden = false;
+  fermerRail(); fermerMenu();
+  $("voile").hidden = false; $("panneau").hidden = false; $("panneau").scrollTop = 0;
   $("fermer-panneau").focus();
+  totalAffiche = 0; repAnimee = false;   // le total se recompte, les barres se remplissent
+  if (pf) dessinerPanneau(pf); else squelette();
   chargerPortefeuille();
+  chargerHistorique();
 }
 function fermerPortefeuille(rendreFocus = true) {
   if ($("panneau").hidden) return;
   $("voile").hidden = true; $("panneau").hidden = true;
+  focaliser(null); cacherBulle();
   if (rendreFocus && declencheur && declencheur.offsetParent) declencheur.focus();
 }
 $("ouvrir-portefeuille").onclick = ouvrirPortefeuille;
 $("ouvrir-portefeuille-mobile").onclick = ouvrirPortefeuille;
+$("resume").onclick = ouvrirPortefeuille;
 $("fermer-panneau").onclick = () => fermerPortefeuille();
 $("voile").onclick = () => fermerPortefeuille();
 
@@ -547,98 +797,518 @@ document.addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); fermerPortefeuille(false); $("question").focus(); }
 });
 
-// ------------------------------------------------------------------ portefeuille
+// Dans la fenêtre : Échap referme d'abord ce qui est déplié, Tab reste dans la fenêtre.
+$("panneau").addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    const ligne = e.target.closest(".pos.ouvert");
+    if (ligne) { e.stopPropagation(); replier(ligne); ligne.querySelector(".pos-tete").focus(); return; }
+    if (e.target.closest("#pf-ajout")) { e.stopPropagation(); basculerAjout(false); $("pf-ajouter").focus(); return; }
+    if (!$("pf-bulle").hidden && e.target.closest("#pf-graphe")) { e.stopPropagation(); cacherBulle(); return; }
+  }
+  if (e.key === "Tab") {
+    const f = [...$("panneau").querySelectorAll('button, input, [tabindex="0"]')]
+      .filter((x) => !x.closest("[inert]") && x.offsetParent && !x.disabled);
+    if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+  }
+});
+
+// montants masqués : retenu par navigateur
+try { if (localStorage.getItem("pf-masque") === "1") $("panneau").classList.add("masque"); } catch {}
+function majOeil() {
+  const m = $("panneau").classList.contains("masque");
+  $("pf-oeil").setAttribute("aria-pressed", String(m));
+  $("pf-oeil").title = m ? "Afficher les montants" : "Masquer les montants";
+  $("pf-oeil").setAttribute("aria-label", $("pf-oeil").title);
+}
+$("pf-oeil").onclick = () => {
+  $("panneau").classList.toggle("masque");
+  try { localStorage.setItem("pf-masque", $("panneau").classList.contains("masque") ? "1" : "0"); } catch {}
+  majOeil();
+};
+majOeil();
+
+$("pf-analyser").onclick = () => {
+  fermerPortefeuille(false);
+  poser("Analyse mon portefeuille : concentration, plus-values latentes et titres à surveiller.");
+};
+$("pf-liq-modifier").onclick = () => {
+  const li = $("pf-liste").querySelector('[data-t="__liq"]');
+  if (!li) return;
+  deplier(li);
+  setTimeout(() => { const i = li.querySelector("input"); if (i) { i.focus(); i.select(); } }, 320);
+};
+
+// ------------------------------------------------------------------ portefeuille : données
 async function chargerPortefeuille() {
   try {
     const p = await (await api("/api/portefeuille")).json();
-    dessiner(p);
+    // l'historique n'est rechargé que si les titres ont vraiment changé depuis le dernier affichage
+    const lignesChangees = !!pf && JSON.stringify(pf.lignes) !== JSON.stringify(p.lignes);
+    const identique = pf && JSON.stringify(pf) === JSON.stringify(p);
+    pf = p;
+    dessinerResume(p);
+    if ($("panneau").hidden) return;
+    if (!identique || !$("pf-liste").querySelector(".pos")) dessinerPanneau(p);
+    if (lignesChangees && histo) chargerHistorique();
   } catch (err) {
-    $("lignes").innerHTML = "";
-    const tr = document.createElement("tr"), td = document.createElement("td");
-    td.colSpan = 8; td.className = "vide"; td.textContent = err.message;
-    tr.appendChild(td); $("lignes").appendChild(tr);
+    if ($("panneau").hidden) return;
+    const liste = $("pf-liste"); liste.replaceChildren();
+    const li = document.createElement("li"); li.className = "pf-vide";
+    const t = document.createElement("p"); t.textContent = err.message;
+    const b = document.createElement("button"); b.type = "button"; b.className = "bouton"; b.textContent = "Réessayer";
+    b.onclick = () => { squelette(); chargerPortefeuille(); chargerHistorique(); };
+    li.append(t, b); liste.appendChild(li);
   }
 }
 
-function dessiner(p) {
-  // ligne d'état : les données de marché ont-elles répondu ?
-  $("pt-donnees").className = "pt " + (p.marche_indisponible ? "ko" : "ok");
-  $("etat-donnees").textContent = p.marche_indisponible ? "injoignables"
-    : p.date_seance ? "séance du " + new Date(p.date_seance + "T12:00:00").toLocaleDateString("fr-FR") : "—";
+// Titres valorisés du plus lourd au plus léger, puis les liquidités.
+function parts(p) {
+  const tries = p.lignes.filter((l) => l.valeur != null).sort((a, b) => b.valeur - a.valeur);
+  const res = tries.map((l, i) => ({
+    cle: l.ticker, nom: l.ticker, valeur: l.valeur, poids: l.poids_pct,
+    couleur: TEINTES[Math.min(i, TEINTES.length - 1)], rang: i,
+  }));
+  if (p.liquidites > 0) res.push({ cle: "__liq", nom: "Liquidités", valeur: p.liquidites, poids: p.poids_liquidites_pct, liquide: true });
+  return res;
+}
 
-  const alerte = $("alerte-marche");
-  if (p.marche_indisponible) {
-    alerte.hidden = false; alerte.textContent = "Données de marché injoignables pour l'instant : les cours ne sont pas affichés.";
-  } else if (p.sans_cours.length) {
-    alerte.hidden = false; alerte.textContent = "Sans cours aujourd'hui : " + p.sans_cours.join(", ") + ". Ces titres ne sont pas comptés dans le total.";
-  } else alerte.hidden = true;
+function dateFr(d, court) {
+  return new Date(d + "T12:00:00").toLocaleDateString("fr-FR",
+    court ? { day: "numeric", month: "short" } : { day: "numeric", month: "long", year: "numeric" });
+}
 
-  // résumé dans le rail
+function dessinerResume(p) {
   $("resume").hidden = !(p.lignes.length || p.liquidites);
   $("r-total").textContent = fcfa(p.total);
   $("r-pv").textContent = p.plus_value_pct == null ? "—" : signe(p.plus_value_pct, nombre(p.plus_value_pct, 1) + " %");
   $("r-pv").className = "mono " + classeSigne(p.plus_value);
   $("r-liq").textContent = fcfa(p.liquidites);
-
-  // panneau
-  $("t-total").textContent = fcfa(p.total);
-  $("t-pv").textContent = signe(p.plus_value, fcfa(p.plus_value));
-  $("t-pv").className = "valeur mono " + classeSigne(p.plus_value);
-  $("t-pv-pct").textContent = p.plus_value_pct == null ? "" : signe(p.plus_value_pct, nombre(p.plus_value_pct, 2) + " %");
-  $("t-pv-pct").className = "sous mono " + classeSigne(p.plus_value_pct);
-  if (document.activeElement !== $("liquidites")) $("liquidites").value = Math.round(p.liquidites);
-  $("t-liq-pct").textContent = p.poids_liquidites_pct == null ? "" : nombre(p.poids_liquidites_pct, 1) + " % du total";
-
-  const corps = $("lignes"); corps.innerHTML = "";
-  if (!p.lignes.length) {
-    corps.innerHTML = '<tr><td colspan="8" class="vide">Aucun titre. Ajoute ta première ligne ci-dessous.</td></tr>';
-    return;
-  }
-  for (const l of p.lignes) {
-    const tr = document.createElement("tr");
-    const cellules = [
-      [l.ticker, "titre"],
-      [nombre(l.quantite), "mono"],
-      [fcfa(l.prix_achat), "mono"],
-      [fcfa(l.cours), "mono"],
-      [fcfa(l.valeur), "mono"],
-      [l.plus_value == null ? "—" : signe(l.plus_value, fcfa(l.plus_value)) + " (" + signe(l.plus_value_pct, nombre(l.plus_value_pct, 1)) + " %)", "mono " + classeSigne(l.plus_value)],
-      [l.poids_pct == null ? "—" : nombre(l.poids_pct, 1) + " %", "mono"],
-    ];
-    for (const [texte, classe] of cellules) {
-      const td = document.createElement("td"); td.textContent = texte; td.className = classe; tr.appendChild(td);
-    }
-    const td = document.createElement("td"), b = document.createElement("button");
-    b.className = "lien"; b.textContent = "✕"; b.title = "Retirer " + l.ticker; b.setAttribute("aria-label", "Retirer " + l.ticker);
-    b.onclick = async () => {
-      if (!confirm("Retirer " + l.ticker + " du portefeuille ?")) return;
-      try { await api("/api/positions/" + l.id, { method: "DELETE" }); chargerPortefeuille(); }
-      catch (err) { ecrire($("message-position"), err.message, "erreur"); }
-    };
-    // Double-clic sur une ligne : elle passe dans le formulaire pour etre modifiee.
-    tr.ondblclick = () => { $("p-ticker").value = l.ticker; $("p-qte").value = l.quantite; $("p-prix").value = l.prix_achat; $("p-qte").focus(); };
-    td.appendChild(b); tr.appendChild(td); corps.appendChild(tr);
+  const mini = $("r-barre"); mini.replaceChildren();
+  for (const pt of parts(p)) {
+    const x = document.createElement("span");
+    x.style.width = pt.poids + "%";
+    if (pt.liquide) x.className = "liquide"; else x.style.setProperty("--n", pt.couleur);
+    mini.appendChild(x);
   }
 }
 
-$("form-position").onsubmit = async (e) => {
+// ------------------------------------------------------------------ portefeuille : affichage
+function el(tag, classe, texte) {
+  const x = document.createElement(tag);
+  if (classe) x.className = classe;
+  if (texte != null) x.textContent = texte;
+  return x;
+}
+
+function squelette() {
+  $("pf-vide").hidden = true;
+  const liste = $("pf-liste"); liste.replaceChildren();
+  for (let i = 0; i < 3; i++) liste.appendChild(el("li", "squelette"));
+}
+
+function compter(cible) {
+  const cible_el = $("pf-total");
+  const depart = totalAffiche; totalAffiche = cible;
+  cancelAnimationFrame(compter.raf);
+  if (mouvementReduit.matches || depart === cible) { cible_el.textContent = nombre(cible); return; }
+  const t0 = performance.now(), duree = 900;
+  const pas = (t) => {
+    const k = Math.min(1, (t - t0) / duree), e = 1 - Math.pow(1 - k, 3);
+    cible_el.textContent = nombre(Math.round(depart + (cible - depart) * e));
+    if (k < 1) compter.raf = requestAnimationFrame(pas);
+  };
+  compter.raf = requestAnimationFrame(pas);
+}
+
+function dessinerPanneau(p) {
+  $("pf-seance").textContent = p.marche_indisponible ? "Cours du jour indisponibles"
+    : p.date_seance ? "Cours de la séance du " + dateFr(p.date_seance) : "";
+  const alerte = $("alerte-marche");
+  if (p.marche_indisponible) {
+    alerte.hidden = false; alerte.textContent = "Les données de marché ne répondent pas : les titres s'affichent sans cours. Réessaie dans une minute.";
+  } else if (p.sans_cours.length) {
+    alerte.hidden = false; alerte.textContent = "Pas de cours aujourd'hui pour " + p.sans_cours.join(", ") + " : ces titres ne sont pas comptés dans le total.";
+  } else alerte.hidden = true;
+
+  compter(p.total);
+  $("pf-pv").textContent = p.cout_titres ? signe(p.plus_value, fcfa(p.plus_value)) : "—";
+  const pct = $("pf-pv-pct");
+  pct.hidden = p.plus_value_pct == null;
+  if (p.plus_value_pct != null) {
+    pct.textContent = (p.plus_value_pct >= 0 ? "↑ " : "↓ ") + nombre(Math.abs(p.plus_value_pct), 1) + " %";
+    pct.className = "pastille-m" + (p.plus_value_pct < 0 ? " baisse" : "");
+  }
+  $("pf-liq").textContent = fcfa(p.liquidites);
+  $("pf-liq-pct").textContent = p.poids_liquidites_pct == null ? "0 %" : nombre(p.poids_liquidites_pct, 1) + " %";
+  $("pf-compte").textContent = p.lignes.length ? " (" + p.lignes.length + ")" : "";
+
+  const pts = parts(p);
+  dessinerRepartition(pts);
+  const saisie = document.activeElement;
+  if ($("pf-liste").contains(saisie) && saisie.tagName === "INPUT") { listeEnAttente = p; return; }
+  dessinerListe(p, pts);
+}
+
+function dessinerRepartition(pts) {
+  const boite = $("pf-repartition"); boite.replaceChildren();
+  const titres = pts.filter((x) => !x.liquide).length;
+  $("rep-info").textContent = titres ? titres + (titres > 1 ? " titres" : " titre") : "";
+  if (!pts.length) { boite.appendChild(el("p", "cote-vide", "Ajoute un titre pour voir sa part dans le portefeuille.")); return; }
+  const animer = !repAnimee && !mouvementReduit.matches;
+  repAnimee = true;
+  pts.forEach((pt, i) => {
+    const ligne = el("button", "rep-ligne"); ligne.type = "button"; ligne.dataset.t = pt.cle;
+    ligne.title = pt.liquide ? "Modifier les liquidités" : "Voir la ligne " + pt.nom;
+    const tete = el("span", "rep-tete");
+    tete.append(el("b", "", pt.nom), el("span", "montant", fcfa(pt.valeur)));
+    const barre = el("span", "rayure" + (pt.liquide ? " liq" : ""));
+    const plein = el("span"); plein.style.setProperty("--i", i);
+    if (!pt.liquide) plein.style.setProperty("--c", pt.couleur);
+    const etiquette = el("em", "", nombre(pt.poids, 1) + " %"); etiquette.style.setProperty("--i", i);
+    if (pt.poids >= 18) {
+      etiquette.classList.add("dedans"); etiquette.style.right = (100 - pt.poids) + "%";
+      if (pt.rang === 0) etiquette.classList.add("clair");
+    } else etiquette.style.left = pt.poids + "%";
+    if (!animer) { plein.style.transition = "none"; plein.style.width = pt.poids + "%"; etiquette.style.animation = "none"; }
+    barre.append(plein, etiquette);
+    ligne.append(tete, barre);
+    ligne.onpointerenter = () => focaliser(pt.cle);
+    ligne.onpointerleave = () => focaliser(null);
+    ligne.onfocus = () => focaliser(pt.cle);
+    ligne.onblur = () => focaliser(null);
+    ligne.onclick = () => {
+      const li = $("pf-liste").querySelector('[data-t="' + CSS.escape(pt.cle) + '"]');
+      if (li) deplier(li);
+    };
+    boite.appendChild(ligne);
+    if (animer) requestAnimationFrame(() => requestAnimationFrame(() => { plein.style.width = pt.poids + "%"; }));
+  });
+}
+
+function focaliser(cle) {
+  const panneau = $("panneau");
+  panneau.classList.toggle("focalise", !!cle);
+  panneau.querySelectorAll(".rep-ligne, .pos").forEach((x) => x.classList.toggle("actif", !!cle && x.dataset.t === cle));
+}
+
+// ------------------------------------------------------------------ courbe
+const G = { W: 560, H: 230, L: 46, R: 10, T: 12, B: 26 };
+const compact = new Intl.NumberFormat("fr-FR", { notation: "compact", maximumFractionDigits: 1 });
+const SVG = "http://www.w3.org/2000/svg";
+function sv(tag, attrs) { const x = document.createElementNS(SVG, tag); for (const k in attrs) x.setAttribute(k, attrs[k]); return x; }
+
+document.querySelectorAll(".periodes button").forEach((b) => b.onclick = () => {
+  periode = b.dataset.periode;
+  document.querySelectorAll(".periodes button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+  chargerHistorique();
+});
+
+async function chargerHistorique() {
+  const demande = periode;
+  try {
+    const h = await (await api("/api/portefeuille/historique?periode=" + demande)).json();
+    if (demande !== periode) return;          // une autre période a été choisie entre-temps
+    histo = h; dessinerGraphe(h);
+  } catch (err) {
+    $("pf-svg").replaceChildren(); $("pf-svg").toggleAttribute("hidden", true); $("pf-graphe-vide").hidden = false;
+    $("pf-graphe-vide").textContent = "Historique indisponible : " + err.message;
+  }
+}
+
+function graduations(min, max) {
+  const brut = (max - min) / 3 || Math.abs(max) / 3 || 1;
+  const p10 = Math.pow(10, Math.floor(Math.log10(brut)));
+  const pas = [1, 2, 2.5, 5, 10].map((m) => m * p10).find((x) => x >= brut);
+  const t = [];
+  for (let x = Math.floor(min / pas) * pas; x < max + pas; x += pas) { t.push(x); if (x >= max) break; }
+  return t;
+}
+
+function dessinerGraphe(h) {
+  const svg = $("pf-svg"); svg.replaceChildren(); cacherBulle();
+  const vide = $("pf-graphe-vide");
+  const evol = $("pf-evol");
+  if (!h.dates.length || h.total.every((v) => !v)) {
+    svg.toggleAttribute("hidden", true); vide.hidden = false; vide.textContent = "La courbe apparaîtra dès que tu auras ajouté un titre.";
+    evol.hidden = true; $("pf-evol-lib").textContent = ""; return;
+  }
+  // un <svg> n'a pas de propriété .hidden : on passe par l'attribut
+  vide.hidden = true; svg.toggleAttribute("hidden", false);
+  const v = h.total, n = v.length;
+  const ticks = graduations(Math.min(...v), Math.max(...v));
+  const y0 = ticks[0], y1 = ticks[ticks.length - 1];
+  const X = (i) => G.L + (n === 1 ? (G.W - G.L - G.R) / 2 : i * (G.W - G.L - G.R) / (n - 1));
+  const Y = (val) => G.T + (1 - (val - y0) / (y1 - y0 || 1)) * (G.H - G.T - G.B);
+
+  const defs = sv("defs", {});
+  const grad = sv("linearGradient", { id: "pf-degrade", x1: 0, y1: 0, x2: 0, y2: 1 });
+  const a = sv("stop", { offset: 0 }); a.style.cssText = "stop-color:var(--menthe);stop-opacity:.24";
+  const b = sv("stop", { offset: 1 }); b.style.cssText = "stop-color:var(--menthe);stop-opacity:0";
+  grad.append(a, b); defs.appendChild(grad); svg.appendChild(defs);
+
+  for (const t of ticks) {
+    svg.appendChild(sv("line", { class: "grille", x1: G.L, x2: G.W - G.R, y1: Y(t), y2: Y(t) }));
+    const lab = sv("text", { class: "y", x: G.L - 8, y: Y(t) + 4, "text-anchor": "end" });
+    lab.textContent = compact.format(t); svg.appendChild(lab);
+  }
+  // repères de dates : début de chaque mois, ou toutes les ~5 séances sur un mois
+  let dernier = null;
+  h.dates.forEach((d, i) => {
+    const repere = periode === "1m" ? (i % 5 === 0) : d.slice(0, 7) !== dernier;
+    dernier = d.slice(0, 7);
+    if (!repere || X(i) > G.W - G.R - 18 || (periode !== "1m" && i === 0 && n > 30)) return;
+    const lab = sv("text", { x: X(i), y: G.H - 6, "text-anchor": "middle" });
+    lab.textContent = periode === "1m" ? dateFr(d, true)
+      : new Date(d + "T12:00:00").toLocaleDateString("fr-FR", { month: "short" }).replace(".", "");
+    svg.appendChild(lab);
+  });
+
+  const trace = v.map((val, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(val).toFixed(1)).join(" ");
+  svg.appendChild(sv("path", { class: "aire", d: trace + " L" + X(n - 1).toFixed(1) + " " + (G.H - G.B) + " L" + X(0).toFixed(1) + " " + (G.H - G.B) + " Z", fill: "url(#pf-degrade)" }));
+  const ligne = sv("path", { class: "ligne", d: trace });
+  svg.appendChild(ligne);
+  if (!mouvementReduit.matches) { ligne.style.setProperty("--long", ligne.getTotalLength()); ligne.classList.add("trace"); }
+
+  const curseur = sv("line", { class: "curseur", y1: G.T, y2: G.H - G.B, visibility: "hidden" });
+  const point = sv("circle", { class: "point", r: 5, visibility: "hidden" });
+  const zone = sv("rect", { x: G.L, y: 0, width: G.W - G.L - G.R, height: G.H, fill: "transparent" });
+  svg.append(curseur, point, zone);
+
+  // évolution sur la période
+  const debut = v.find((x) => x > 0) || v[0], fin = v[n - 1];
+  if (debut) {
+    const e = (fin - debut) / debut * 100;
+    evol.hidden = false; evol.textContent = (e >= 0 ? "↑ " : "↓ ") + nombre(Math.abs(e), 1) + " %";
+    evol.className = "pastille-m" + (e < 0 ? " baisse" : "");
+    $("pf-evol-lib").textContent = "sur " + DUREES[periode] + ", pour tes titres actuels";
+  }
+
+  let index = null;
+  const montrer = (i) => {
+    index = Math.max(0, Math.min(n - 1, i));
+    curseur.setAttribute("x1", X(index)); curseur.setAttribute("x2", X(index)); curseur.setAttribute("visibility", "visible");
+    point.setAttribute("cx", X(index)); point.setAttribute("cy", Y(v[index])); point.setAttribute("visibility", "visible");
+    remplirBulle(h, index, X(index) / G.W);
+  };
+  const depuisPointeur = (e) => {
+    const r = svg.getBoundingClientRect();
+    const x = (e.clientX - r.left) * G.W / r.width;
+    montrer(Math.round((x - G.L) / ((G.W - G.L - G.R) / Math.max(1, n - 1))));
+  };
+  zone.onpointermove = depuisPointeur;
+  zone.onpointerdown = depuisPointeur;
+  zone.onpointerleave = () => { cacherBulle(); curseur.setAttribute("visibility", "hidden"); point.setAttribute("visibility", "hidden"); };
+  const graphe = $("pf-graphe");
+  graphe.onfocus = () => montrer(index ?? n - 1);
+  graphe.onblur = () => zone.onpointerleave();
+  graphe.onkeydown = (e) => {
+    const pas = { ArrowLeft: -1, ArrowRight: 1, PageUp: -5, PageDown: 5 }[e.key];
+    if (pas) { e.preventDefault(); montrer((index ?? n - 1) + pas); }
+    if (e.key === "Home") { e.preventDefault(); montrer(0); }
+    if (e.key === "End") { e.preventDefault(); montrer(n - 1); }
+  };
+}
+
+function remplirBulle(h, i, fraction) {
+  const bulle = $("pf-bulle"); bulle.replaceChildren();
+  bulle.appendChild(el("div", "date", dateFr(h.dates[i])));
+  const couleurs = new Map(pf ? parts(pf).map((x) => [x.cle, x.couleur]) : []);
+  const top = h.series.map((s) => ({ t: s.ticker, v: s.valeurs[i] })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v).slice(0, 3);
+  const valeurs = el("div", "valeurs");
+  for (const x of top) {
+    const d = el("div", "v"); d.style.setProperty("--c", couleurs.get(x.t) || "var(--menthe)");
+    d.append(el("small", "", x.t), el("b", "", fcfa(x.v))); valeurs.appendChild(d);
+  }
+  bulle.appendChild(valeurs);
+  const tot = el("div", "tot"); tot.append("Total des titres", el("b", "", fcfa(h.total[i])));
+  bulle.appendChild(tot);
+  bulle.hidden = false;
+  const largeur = $("pf-graphe").clientWidth, demi = bulle.offsetWidth / 2;
+  bulle.style.left = Math.max(demi, Math.min(largeur - demi, fraction * largeur)) + "px";
+}
+function cacherBulle() { $("pf-bulle").hidden = true; }
+
+// ------------------------------------------------------------------ mes titres
+function dessinerListe(p, pts) {
+  listeEnAttente = null;
+  const ouverte = $("pf-liste").querySelector(".pos.ouvert");
+  const garderOuverte = ouverte ? ouverte.dataset.t : null;
+  const liste = $("pf-liste"); liste.replaceChildren();
+  $("pf-vide").hidden = !!(p.lignes.length || p.liquidites) || $("pf-ajout").classList.contains("ouvert");
+
+  const couleurs = new Map(pts.map((pt) => [pt.cle, pt.couleur]));
+  const ordre = [...p.lignes].sort((a, b) => (b.valeur ?? -1) - (a.valeur ?? -1));
+  for (const l of ordre) liste.appendChild(ligneTitre(l, couleurs.get(l.ticker)));
+  liste.appendChild(ligneLiquidites(p));
+
+  if (garderOuverte) { const li = liste.querySelector('[data-t="' + CSS.escape(garderOuverte) + '"]'); if (li) deplier(li, false); }
+  if (aEclairer) {
+    const li = liste.querySelector('[data-t="' + CSS.escape(aEclairer) + '"]');
+    if (li) { li.classList.add("eclat"); li.scrollIntoView({ block: "nearest", behavior: mouvementReduit.matches ? "auto" : "smooth" }); }
+    aEclairer = null;
+  }
+}
+
+function enTete(li, nuance, nom, detailNom, valeur, detailValeur, classeDetail, poids) {
+  const tete = el("button", "pos-tete");
+  tete.type = "button"; tete.setAttribute("aria-expanded", "false");
+  const n = el("span", "nuance" + (nuance === "liquide" ? " liquide" : ""));
+  if (nuance && nuance !== "liquide") n.style.setProperty("--n", nuance);
+  const bloc = el("span", "pos-nom"); bloc.append(nom, el("small", "", detailNom));
+  const val = el("span", "pos-val");
+  val.append(el("b", "mono", valeur), el("small", "mono " + (classeDetail || ""), detailValeur));
+  tete.append(n, bloc, val, el("span", "pos-poids mono", poids));
+  tete.insertAdjacentHTML("beforeend", '<svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>');
+  tete.onclick = () => (li.classList.contains("ouvert") ? replier(li) : deplier(li));
+  tete.onfocus = () => focaliser(li.dataset.t);
+  tete.onblur = () => focaliser(null);
+  li.onpointerenter = () => focaliser(li.dataset.t);
+  li.onpointerleave = () => focaliser(null);
+  return tete;
+}
+
+function apresModification(cle, message) {
+  ecrire($("message-position"), message, "ok");
+  aEclairer = cle;
+  if (document.activeElement) document.activeElement.blur();
+  chargerPortefeuille();
+}
+
+function ligneTitre(l, couleur) {
+  const li = el("li", "pos"); li.dataset.t = l.ticker;
+  const nom = el("b", "", l.ticker);
+  if (l.poids_pct != null && l.poids_pct >= 40) nom.appendChild(el("span", "badge", "Poids élevé"));
+  const tete = enTete(li, couleur, nom,
+    nombre(l.quantite) + " × " + fcfa(l.prix_achat),
+    l.valeur == null ? "—" : fcfa(l.valeur),
+    l.valeur == null ? "Cours indisponible" : signe(l.plus_value, fcfa(l.plus_value)) + " (" + signe(l.plus_value_pct, nombre(l.plus_value_pct, 1)) + " %)",
+    classeSigne(l.plus_value),
+    l.poids_pct == null ? "—" : nombre(l.poids_pct, 1) + " %");
+
+  const detail = el("div", "pos-detail");
+  const faits = el("dl", "pos-faits");
+  const fait = (dt, dd, petit, classe) => {
+    const d = el("div"); const x = el("dd", "mono", dd);
+    if (petit) x.appendChild(el("small", classe || "", petit));
+    d.append(el("dt", "", dt), x); faits.appendChild(d);
+  };
+  fait("Cours du jour", fcfa(l.cours), l.variation_jour || "", classeSigne(parseFloat(String(l.variation_jour || "").replace(",", "."))));
+  fait("RSI 14 jours", l.rsi == null ? "—" : nombre(l.rsi, 2),
+       l.rsi == null ? "" : l.rsi >= 70 ? "zone de surachat" : l.rsi <= 30 ? "zone de survente" : "zone neutre");
+  fait("Coût d'achat", fcfa(l.cout));
+
+  const form = el("form", "pf-form");
+  const champ = (libelle, valeur, attrs) => {
+    const d = el("div"); const id = "e-" + l.ticker + "-" + attrs.name;
+    const lab = el("label", "", libelle); lab.htmlFor = id;
+    const i = el("input", "mono"); i.id = id; i.type = "number"; i.required = true; i.value = valeur;
+    Object.assign(i, attrs); d.append(lab, i); form.appendChild(d); return i;
+  };
+  const q = champ("Quantité", l.quantite, { name: "qte", min: 1, step: 1 });
+  const pr = champ("Prix de revient", l.prix_achat, { name: "prix", min: 0, step: "any" });
+  const ok = el("button", "bouton plein", "Enregistrer"); form.appendChild(ok);
+  form.onsubmit = async (e) => {
+    e.preventDefault(); ok.disabled = true;
+    try {
+      await api("/api/positions", { method: "PUT", body: JSON.stringify({ ticker: l.ticker, quantite: +q.value, prix_achat: +pr.value }) });
+      replier(li); apresModification(l.ticker, l.ticker + " mis à jour.");
+    } catch (err) { ecrire($("message-position"), err.message, "erreur"); ok.disabled = false; }
+  };
+
+  const retrait = el("div", "pos-retrait");
+  const demander = el("button", "lien danger", "Retirer du portefeuille"); demander.type = "button";
+  const confirmer = el("span"); confirmer.hidden = true;
+  const oui = el("button", "bouton danger petit", "Oui, retirer " + l.ticker); oui.type = "button";
+  const non = el("button", "bouton petit", "Annuler"); non.type = "button";
+  confirmer.append(oui, " ", non);
+  demander.onclick = () => { demander.hidden = true; confirmer.hidden = false; non.focus(); };
+  non.onclick = () => { confirmer.hidden = true; demander.hidden = false; demander.focus(); };
+  oui.onclick = async () => {
+    oui.disabled = true; li.classList.add("sortie");
+    try {
+      await api("/api/positions/" + l.id, { method: "DELETE" });
+      ecrire($("message-position"), l.ticker + " retiré du portefeuille.", "ok");
+      setTimeout(chargerPortefeuille, mouvementReduit.matches ? 0 : 200);
+    } catch (err) { li.classList.remove("sortie"); oui.disabled = false; ecrire($("message-position"), err.message, "erreur"); }
+  };
+  retrait.append(demander, confirmer);
+
+  detail.append(faits, form, retrait);
+  li.append(tete, depliant(detail));
+  return li;
+}
+
+function ligneLiquidites(p) {
+  const li = el("li", "pos liq"); li.dataset.t = "__liq";
+  const tete = enTete(li, "liquide", el("b", "", "Liquidités"), "Disponibles pour investir",
+    fcfa(p.liquidites), "", "",
+    p.poids_liquidites_pct == null ? "—" : nombre(p.poids_liquidites_pct, 1) + " %");
+  const detail = el("div", "pos-detail");
+  const form = el("form", "pf-form");
+  const d = el("div"); const lab = el("label", "", "Montant en FCFA"); lab.htmlFor = "e-liquidites";
+  const i = el("input", "mono"); i.id = "e-liquidites"; i.type = "number"; i.min = 0; i.step = 1; i.required = true;
+  i.value = Math.round(p.liquidites);
+  d.append(lab, i);
+  const ok = el("button", "bouton plein", "Enregistrer");
+  form.append(d, el("div"), ok);
+  form.onsubmit = async (e) => {
+    e.preventDefault(); ok.disabled = true;
+    try {
+      await api("/api/liquidites", { method: "PUT", body: JSON.stringify({ montant: +i.value || 0 }) });
+      replier(li); apresModification("__liq", "Liquidités mises à jour.");
+    } catch (err) { ecrire($("message-position"), err.message, "erreur"); ok.disabled = false; }
+  };
+  detail.appendChild(form);
+  li.append(tete, depliant(detail));
+  return li;
+}
+
+function depliant(contenu) {
+  const d = el("div", "depliant"); const interieur = el("div");
+  interieur.inert = true; interieur.appendChild(contenu); d.appendChild(interieur);
+  return d;
+}
+function deplier(li, defiler = true) {
+  $("pf-liste").querySelectorAll(".pos.ouvert").forEach((x) => { if (x !== li) replier(x); });
+  li.classList.add("ouvert");
+  li.querySelector(".pos-tete").setAttribute("aria-expanded", "true");
+  const d = li.querySelector(".depliant"); d.classList.add("ouvert"); d.firstChild.inert = false;
+  if (defiler) setTimeout(() => li.scrollIntoView({ block: "nearest", behavior: mouvementReduit.matches ? "auto" : "smooth" }), 120);
+}
+function replier(li) {
+  li.classList.remove("ouvert");
+  li.querySelector(".pos-tete").setAttribute("aria-expanded", "false");
+  const d = li.querySelector(".depliant"); d.classList.remove("ouvert"); d.firstChild.inert = true;
+  if (listeEnAttente && pf) dessinerListe(pf, parts(pf));
+}
+
+// ------------------------------------------------------------------ mes titres : ajout
+function basculerAjout(ouvrir) {
+  const d = $("pf-ajout"), b = $("pf-ajouter");
+  ouvrir = ouvrir ?? !d.classList.contains("ouvert");
+  d.classList.toggle("ouvert", ouvrir); d.firstElementChild.inert = !ouvrir;
+  b.setAttribute("aria-expanded", String(ouvrir));
+  // portefeuille vide : le formulaire remplace l'invitation, pas de double bouton
+  if (pf && !pf.lignes.length && !pf.liquidites) $("pf-vide").hidden = ouvrir;
+  if (ouvrir) setTimeout(() => $("p-ticker").focus(), 60);
+}
+$("pf-ajouter").onclick = () => basculerAjout();
+$("pf-vide-ajouter").onclick = () => basculerAjout(true);
+
+$("pf-form-ajout").onsubmit = async (e) => {
   e.preventDefault();
   const msg = $("message-position");
   const corps = { ticker: $("p-ticker").value.trim().toUpperCase(), quantite: +$("p-qte").value, prix_achat: +$("p-prix").value };
-  ecrire(msg, "Vérification du titre…");
+  const bouton = e.target.querySelector("button"); bouton.disabled = true;
+  ecrire(msg, "Vérification de " + corps.ticker + "…");
   try {
     await api("/api/positions", { method: "PUT", body: JSON.stringify(corps) });
-    ecrire(msg, corps.ticker + " enregistré. Double-clic sur une ligne pour la modifier.", "ok");
-    e.target.reset(); chargerPortefeuille();
+    e.target.reset(); basculerAjout(false);
+    apresModification(corps.ticker, corps.ticker + " ajouté au portefeuille.");
   } catch (err) { ecrire(msg, err.message, "erreur"); }
-};
-
-$("form-liquidites").onsubmit = async (e) => {
-  e.preventDefault();
-  try {
-    await api("/api/liquidites", { method: "PUT", body: JSON.stringify({ montant: +$("liquidites").value || 0 }) });
-    $("liquidites").blur(); chargerPortefeuille();
-  } catch (err) { ecrire($("message-position"), err.message, "erreur"); }
+  finally { bouton.disabled = false; }
 };
 
 async function chargerTickers() {
@@ -648,6 +1318,73 @@ async function chargerTickers() {
     for (const x of t.stocks) { const o = document.createElement("option"); o.value = x; liste.appendChild(o); }
   } catch {}
 }
+
+// ------------------------------------------------------------------ modèles
+let catalogue = [], choix = null;
+
+function logoModele(m, taille = 14) {
+  const s = document.createElement("span");
+  s.className = "logo"; s.setAttribute("aria-hidden", "true");
+  s.style.width = s.style.height = taille + "px";
+  if (m && m.logo) {
+    s.style.setProperty("--m", "url(/static/logos/" + m.logo + ")");
+    s.style.setProperty("--c", m.couleur || "currentColor");
+  }
+  return s;
+}
+
+function choisirModele(id) {
+  choix = catalogue.find((m) => m.id === id) || catalogue[0];
+  const logo = logoModele(choix, 12); logo.id = "modele-logo";
+  $("modele-logo").replaceWith(logo);
+  $("modele-nom").textContent = choix.nom;
+  $("choix-modele").title = "Modèle : " + choix.nom + " (" + choix.fournisseur_nom + "). Cliquer pour changer.";
+  try { localStorage.setItem("modele", choix.id); } catch {}
+  $("menu-modeles").querySelectorAll("[role=menuitemradio]")
+    .forEach((b) => b.setAttribute("aria-checked", String(b.dataset.id === choix.id)));
+}
+
+function construireMenu() {
+  const menu = $("menu-modeles"); menu.innerHTML = "";
+  let fournisseur = null;
+  for (const m of catalogue) {
+    if (m.fournisseur !== fournisseur) {
+      fournisseur = m.fournisseur;
+      const h = document.createElement("h6"); h.textContent = m.fournisseur_nom; menu.appendChild(h);
+    }
+    const b = document.createElement("button");
+    b.type = "button"; b.dataset.id = m.id;
+    b.setAttribute("role", "menuitemradio"); b.setAttribute("aria-checked", String(choix && choix.id === m.id));
+    const txt = document.createElement("span"); txt.className = "txt";
+    const nom = document.createElement("span"); nom.textContent = m.nom;
+    const note = document.createElement("small"); note.textContent = m.note || "";
+    txt.append(nom, note);
+    const coche = document.createElement("span"); coche.className = "coche"; coche.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+    b.append(logoModele(m, 16), txt, coche);
+    b.onclick = () => { choisirModele(m.id); fermerMenu(); $("question").focus(); };
+    menu.appendChild(b);
+  }
+}
+
+function ouvrirMenu() {
+  const menu = $("menu-modeles");
+  // a l'accueil la saisie est au milieu : le menu s'ouvre vers le bas ; en conversation, vers le haut
+  menu.classList.toggle("bas", $("zone").parentElement.id === "place-zone");
+  menu.hidden = false; $("choix-modele").setAttribute("aria-expanded", "true");
+  (menu.querySelector('[aria-checked="true"]') || menu.querySelector("button")).focus();
+}
+function fermerMenu() { $("menu-modeles").hidden = true; $("choix-modele").setAttribute("aria-expanded", "false"); }
+$("choix-modele").onclick = (e) => { e.stopPropagation(); $("menu-modeles").hidden ? ouvrirMenu() : fermerMenu(); };
+document.addEventListener("click", (e) => {
+  if (!$("menu-modeles").hidden && !$("menu-modeles").contains(e.target)) fermerMenu();
+});
+$("menu-modeles").onkeydown = (e) => {
+  const items = [...$("menu-modeles").querySelectorAll("button")];
+  const i = items.indexOf(document.activeElement);
+  if (e.key === "ArrowDown") { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+  else if (e.key === "Escape" || e.key === "Tab") { e.stopPropagation(); fermerMenu(); $("choix-modele").focus(); }
+};
 
 // ------------------------------------------------------------------ conversation
 let historique = [];
@@ -664,15 +1401,11 @@ function modeConversation(actif) {
 function nouvelleConversation() {
   historique = [];
   document.querySelectorAll("#fil .tour").forEach((t) => t.remove());
-  $("conv-courante").hidden = true;
-  $("nouvelle").classList.add("actif");
-  $("conv-courante").classList.remove("actif");
   modeConversation(false);
   fermerRail();
   $("question").value = ""; ajusterSaisie();
   if (!$("vue-app").hidden) $("question").focus();
 }
-$("nouvelle").onclick = () => { if (!enCours) nouvelleConversation(); };
 
 function tour(classe) {
   const t = document.createElement("div");
@@ -694,16 +1427,13 @@ function libelleOutil(nom, args) {
 async function poser(question) {
   if (enCours) return;
   enCours = true; $("envoyer").disabled = true;
-  if ($("conv-courante").hidden) {
-    $("conv-titre").textContent = question;
-    $("conv-courante").hidden = false; $("conv-courante").classList.add("actif");
-    $("nouvelle").classList.remove("actif");
-  }
   modeConversation(true);
 
   const moi = tour("moi"); const b = document.createElement("div"); b.className = "bulle"; b.textContent = question; moi.appendChild(b);
   const lui = tour("lui");
-  lui.innerHTML = '<div class="qui">' + MARQUE + '<b>Assistant</b></div>';
+  const qui = document.createElement("div"); qui.className = "qui";
+  const quiNom = document.createElement("b"); quiNom.textContent = choix.nom;
+  qui.append(logoModele(choix, 14), quiNom); lui.appendChild(qui);
   const outils = document.createElement("div"); outils.className = "outils";
   const attente = document.createElement("div"); attente.className = "attente"; attente.textContent = "Analyse en cours";
   lui.append(outils, attente);
@@ -712,7 +1442,7 @@ async function poser(question) {
   const finirOutils = () => outils.querySelectorAll(".outil").forEach((o) => o.classList.add("fini"));
   let reponse = null;
   try {
-    const r = await api("/api/chat", { method: "POST", body: JSON.stringify({ question, historique: historique.slice(-10) }) });
+    const r = await api("/api/chat", { method: "POST", body: JSON.stringify({ question, historique: historique.slice(-10), modele: choix.id }) });
     const lecteur = r.body.getReader(), decodeur = new TextDecoder();
     let tampon = "";
     for (;;) {
@@ -724,7 +1454,11 @@ async function poser(question) {
         const ligne = tampon.slice(0, fin).trim(); tampon = tampon.slice(fin + 1);
         if (!ligne) continue;
         const ev = JSON.parse(ligne);
-        if (ev.type === "outil") {
+        if (ev.type === "modele") {
+          // le modele qui travaille vraiment (il change si un secours prend le relais)
+          const m = catalogue.find((x) => x.id === ev.id) || { nom: ev.nom };
+          qui.firstChild.replaceWith(logoModele(m, 14)); quiNom.textContent = m.nom;
+        } else if (ev.type === "outil") {
           outils.appendChild(libelleOutil(ev.nom, ev.arguments));
           attente.textContent = "Analyse en cours";
         } else if (ev.type === "attente") {
@@ -779,8 +1513,11 @@ document.querySelectorAll("#suggestions .puce").forEach((b) => b.onclick = () =>
 // ------------------------------------------------------------------ démarrage
 (async () => {
   const c = await (await fetch("/api/config")).json();
-  $("modele-nom").textContent = c.modeles[0];
-  $("etat-modele").textContent = c.modeles[0] + (c.modeles.length > 1 ? " +" + (c.modeles.length - 1) + " secours" : "");
+  catalogue = c.modeles;
+  let enregistre = null;
+  try { enregistre = localStorage.getItem("modele"); } catch {}
+  choisirModele(catalogue.some((m) => m.id === enregistre) ? enregistre : c.defaut);
+  construireMenu();
   sb = supabase.createClient(c.supabase_url, c.supabase_key);
   const { data } = await sb.auth.getSession();
   afficher(data.session);

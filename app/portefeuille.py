@@ -64,3 +64,29 @@ def valoriser(positions: list[dict], liquidites: float, indicateurs: dict[str, d
         "poids_liquidites_pct": round(liquidites / total * 100, 2) if total else None,
         "sans_cours": [l["ticker"] for l in lignes if l["valeur"] is None],
     }
+
+
+def historique(positions: list[dict], cours: dict[str, list[tuple[str, float]]], seances: int) -> dict:
+    """Valeur des titres ACTUELS a chaque seance, quantites constantes.
+
+    L'application ne connait pas la date des achats : cette courbe montre comment
+    le panier detenu aujourd'hui a evolue, pas la performance reelle du compte.
+    Un titre sans cours a une date (pas encore cote) compte pour zero ce jour-la ;
+    un jour sans echange reprend la derniere cloture connue.
+    """
+    dates = sorted({d for points in cours.values() for d, _ in points})[-seances:]
+    series = []
+    for p in positions:
+        points = dict(cours.get(p["ticker"], []))
+        quantite = float(p["quantite"])
+        derniere, valeurs = None, []
+        # la derniere cloture connue avant la fenetre sert de point de depart
+        anterieures = [c for d, c in sorted(cours.get(p["ticker"], [])) if dates and d < dates[0]]
+        if anterieures:
+            derniere = anterieures[-1]
+        for d in dates:
+            derniere = points.get(d, derniere)
+            valeurs.append(round(quantite * derniere, 2) if derniere is not None else 0.0)
+        series.append({"ticker": p["ticker"], "valeurs": valeurs})
+    total = [round(sum(s["valeurs"][i] for s in series), 2) for i in range(len(dates))]
+    return {"dates": dates, "total": total, "series": series}
