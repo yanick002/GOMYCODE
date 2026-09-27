@@ -462,7 +462,7 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
   <nav id="rail" aria-label="Navigation">
     <div class="marque">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="13" width="4.4" height="8" rx="1.4" fill="currentColor" opacity=".32"/><rect x="9.8" y="8" width="4.4" height="13" rx="1.4" fill="currentColor" opacity=".62"/><rect x="16.6" y="3" width="4.4" height="18" rx="1.4" fill="currentColor"/></svg>
-      <h1>Portefeuille BRVM</h1>
+      <h1>Mansa</h1>
     </div>
     <div class="filet"></div>
 
@@ -504,7 +504,7 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
       <button class="rond" id="ouvrir-rail" aria-label="Ouvrir le menu" aria-controls="rail">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
-      <div class="marque"><h1>Portefeuille BRVM</h1></div>
+      <div class="marque"><h1>Mansa</h1></div>
       <button class="rond" id="ouvrir-portefeuille-mobile" aria-label="Mon portefeuille" aria-controls="panneau">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2.5"/><path d="M16 13h2M3 10h18M7 6V4.5A1.5 1.5 0 0 1 8.5 3h7A1.5 1.5 0 0 1 17 4.5V6"/></svg>
       </button>
@@ -1339,7 +1339,7 @@ function choisirModele(id) {
   $("modele-logo").replaceWith(logo);
   $("modele-nom").textContent = choix.nom;
   $("choix-modele").title = "Modèle : " + choix.nom + " (" + choix.fournisseur_nom + "). Cliquer pour changer.";
-  try { localStorage.setItem("modele", choix.id); } catch {}
+  try { localStorage.setItem("modele-choisi", choix.id); } catch {}
   $("menu-modeles").querySelectorAll("[role=menuitemradio]")
     .forEach((b) => b.setAttribute("aria-checked", String(b.dataset.id === choix.id)));
 }
@@ -1515,7 +1515,7 @@ document.querySelectorAll("#suggestions .puce").forEach((b) => b.onclick = () =>
   const c = await (await fetch("/api/config")).json();
   catalogue = c.modeles;
   let enregistre = null;
-  try { enregistre = localStorage.getItem("modele"); } catch {}
+  try { enregistre = localStorage.getItem("modele-choisi"); } catch {}
   choisirModele(catalogue.some((m) => m.id === enregistre) ? enregistre : c.defaut);
   construireMenu();
   sb = supabase.createClient(c.supabase_url, c.supabase_key);

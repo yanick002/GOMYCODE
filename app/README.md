@@ -36,7 +36,7 @@ Navigateur ── FastAPI (ce dossier) ──┬── Supabase : comptes + port
 ### 2. Les modèles
 
 Mettre dans `.env` la clé d'au moins un fournisseur déclaré dans `modeles.json`
-(`GEMINI_API_KEY`, `NVIDIA_API_KEY`…). Les modèles d'un fournisseur sans clé
+(`MODELSCOPE_API_KEY`, `GEMINI_API_KEY`, `NVIDIA_API_KEY`…). Les modèles d'un fournisseur sans clé
 n'apparaissent pas dans le menu.
 
 ### 3. Lancer en local

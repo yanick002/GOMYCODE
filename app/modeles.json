@@ -1,7 +1,14 @@
 {
-  "_aide": "Catalogue des modeles proposes dans le menu. Un fournisseur = une URL compatible OpenAI (/chat/completions) + le nom de la variable d'environnement qui contient sa cle. Un modele n'apparait que si la cle de son fournisseur est definie. Le premier modele disponible est celui par defaut. Si un modele est sature, la question repart avec les suivants du meme fournisseur, dans l'ordre de cette liste.",
+  "_aide": "Catalogue des modeles proposes dans le menu. Un fournisseur = une URL compatible OpenAI (/chat/completions) + le nom de la variable d'environnement qui contient sa cle. Un modele n'apparait que si la cle de son fournisseur est definie. Le premier modele disponible est celui par defaut. Si un modele est sature, la question repart avec ses secours : ceux qu'il nomme (\"secours\"), sinon les suivants du meme fournisseur.",
 
   "fournisseurs": {
+    "modelscope": {
+      "nom": "DeepSeek (via ModelScope)",
+      "base_url": "https://api-inference.modelscope.ai/v1",
+      "cle": "MODELSCOPE_API_KEY",
+      "logo": "deepseek.svg",
+      "couleur": "#5786FE"
+    },
     "gemini": {
       "nom": "Google Gemini",
       "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
@@ -19,6 +26,8 @@
   },
 
   "modeles": [
+    {"id": "deepseek-ai/DeepSeek-V4.1-Flash", "nom": "DeepSeek V4.1 Flash", "fournisseur": "modelscope", "note": "Par défaut · open source",
+     "secours": ["gemini-3.8-flash", "gemini-3.6-flash"]},
     {"id": "gemini-3.8-flash", "nom": "Gemini 3.8 Flash", "fournisseur": "gemini", "note": "Rapide et précis"},
     {"id": "gemini-3.6-flash", "nom": "Gemini 3.6 Flash", "fournisseur": "gemini", "note": "Rapide"},
     {"id": "gemini-3.5-flash", "nom": "Gemini 3.5 Flash", "fournisseur": "gemini", "note": "Génération précédente"},

@@ -47,11 +47,17 @@ MODELE_PAR_DEFAUT = MODELES[0]["id"]
 
 
 def chaine(modele_id: str | None) -> list[dict]:
-    """Le modele demande, puis ses secours : les autres modeles du meme
-    fournisseur, dans l'ordre du catalogue. Un identifiant inconnu donne le
-    modele par defaut."""
+    """Le modele demande, puis ses secours. Par defaut, les secours sont les
+    autres modeles du meme fournisseur, dans l'ordre du catalogue ; un modele
+    peut aussi les nommer lui-meme ("secours" dans modeles.json). Un secours
+    sans cle est ignore. Un identifiant inconnu donne le modele par defaut."""
     choisi = next((m for m in MODELES if m["id"] == modele_id), MODELES[0])
-    return [choisi] + [m for m in MODELES if m["fournisseur"] == choisi["fournisseur"] and m is not choisi]
+    if "secours" in choisi:
+        par_id = {m["id"]: m for m in MODELES}
+        secours = [par_id[i] for i in choisi["secours"] if i in par_id and i != choisi["id"]]
+    else:
+        secours = [m for m in MODELES if m["fournisseur"] == choisi["fournisseur"] and m is not choisi]
+    return [choisi] + secours
 
 
 def catalogue_public() -> list[dict]:
