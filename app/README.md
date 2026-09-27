@@ -1,5 +1,7 @@
 # Portefeuille BRVM — application web
 
+En ligne : https://mansa-jet.vercel.app/
+
 Chaque utilisateur crée un compte, saisit son portefeuille et pose ses questions.
 Un modèle open source répond en s'appuyant sur le portefeuille et sur les
 données de marché du serveur MCP.

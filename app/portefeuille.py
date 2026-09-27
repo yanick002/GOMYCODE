@@ -53,6 +53,17 @@ def valoriser(positions: list[dict], liquidites: float, indicateurs: dict[str, d
     for l in lignes:
         l["poids_pct"] = round(l["valeur"] / total * 100, 2) if l["valeur"] is not None and total else None
 
+    # Variation de la seance : valeur d'aujourd'hui moins valeur a la cloture
+    # de la veille, deduite de la variation du jour de chaque titre.
+    veille = seance = 0.0
+    for l in valorisees:
+        v = _nombre(l["variation_jour"])
+        if v is None or v <= -100:
+            continue
+        precedente = l["valeur"] / (1 + v / 100)
+        veille += precedente
+        seance += l["valeur"] - precedente
+
     return {
         "lignes": lignes,
         "liquidites": round(liquidites, 2),
@@ -62,6 +73,8 @@ def valoriser(positions: list[dict], liquidites: float, indicateurs: dict[str, d
         "plus_value_pct": round((valeur_titres - cout_titres) / cout_titres * 100, 2) if cout_titres else None,
         "total": round(total, 2),
         "poids_liquidites_pct": round(liquidites / total * 100, 2) if total else None,
+        "variation_seance": round(seance, 2) if veille else None,
+        "variation_seance_pct": round(seance / veille * 100, 2) if veille else None,
         "sans_cours": [l["ticker"] for l in lignes if l["valeur"] is None],
     }
 

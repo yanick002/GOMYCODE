@@ -225,44 +225,46 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
   z-index:40;animation:fondu .25s ease-out}
 @keyframes fondu{from{opacity:0}}
 .pf2{position:fixed;inset:18px;z-index:41;border-radius:26px;overflow-y:auto;overscroll-behavior:contain;
-  background-color:var(--fond-pf);background-image:radial-gradient(var(--point) 1px,transparent 1.3px);background-size:14px 14px;
+  background:var(--fond-pf);
   box-shadow:0 40px 90px -24px rgba(15,23,42,.5);animation:surgit .42s cubic-bezier(.2,.8,.2,1)}
 @keyframes surgit{from{opacity:0;transform:translateY(18px) scale(.985)}}
 @media (max-width:900px){.pf2{inset:0;border-radius:0}}
 
 .pf2-tete{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:12px;padding:16px 22px 26px;
   background:linear-gradient(var(--fond-pf) 60%,transparent)}
-.insigne{width:42px;height:42px;border-radius:13px;flex:none;display:grid;place-items:center;color:#E6FFFA;
-  background:linear-gradient(165deg,var(--petrole-clair),var(--petrole));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 1px rgba(255,255,255,.06),0 10px 20px -8px rgba(11,58,59,.65)}
+.pf2-marque{display:flex;align-items:center;gap:9px;flex:none;font-size:19px;font-weight:700;letter-spacing:-.03em;color:var(--ink)}
+.pf2-sep{width:1px;height:30px;background:var(--line);flex:none;margin:0 4px}
+@media (max-width:560px){.pf2-marque{font-size:17px}.pf2-sep{display:none}}
 .pf2-tete .titre{flex:1;min-width:0}
 .pf2-tete h2{margin:0;font-size:16px;font-weight:600;letter-spacing:-.01em}
 .pf2-tete p{margin:1px 0 0;font-size:12px;color:var(--ink-3)}
 .bouton-carte{width:38px;height:38px;border-radius:11px;flex:none;display:grid;place-items:center;border:1px solid var(--line);
   background:var(--carte);color:var(--ink-2);box-shadow:var(--ombre-s);transition:color .15s,transform .15s,box-shadow .15s}
 .bouton-carte:hover{color:var(--ink);transform:translateY(-1px);box-shadow:var(--ombre-m)}
-.pf2 .alerte{max-width:1000px;margin:0 auto 6px;background:var(--carte);border:1px solid var(--line);border-left:3px solid var(--ambre);
+.pf2 .alerte{margin:0 0 6px;background:var(--carte);border:1px solid var(--line);border-left:3px solid var(--ambre);
   border-radius:10px;padding:9px 13px;font-size:12.5px;color:var(--ink-2)}
 
-/* la scène : une carte principale, des cartes flottantes autour */
-.scene{position:relative;display:grid;grid-template-columns:minmax(230px,1fr) minmax(0,580px) minmax(230px,1fr);gap:30px;
-  align-items:center;max-width:1260px;margin:0 auto;padding:40px 36px 34px}
-.scene::before{content:"";position:absolute;inset:0 9%;border:1.5px dashed var(--tiret);border-radius:48px;pointer-events:none}
-@media (max-width:1150px){.scene{grid-template-columns:minmax(0,1fr) minmax(0,1fr);max-width:820px}
-  .carte-principale{grid-column:1/-1;order:-1}.scene::before{inset:0 3%}}
-@media (max-width:640px){.scene{grid-template-columns:minmax(0,1fr);gap:18px;padding:6px 14px 22px}.scene::before{display:none}}
+/* la scène : la carte principale au centre, deux cartes de même taille de chaque côté */
+.pf2-corps{max-width:1180px;margin:0 auto;padding:0 34px}
+@media (max-width:640px){.pf2-corps{padding:0 14px}}
+.scene{position:relative;display:grid;gap:22px;margin:26px 0 34px;
+  grid-template-columns:minmax(0,1fr) minmax(0,2.15fr) minmax(0,1fr);grid-template-rows:1fr 1fr;
+  grid-template-areas:"pv centre liq" "jour centre ligne"}
+.scene::before{content:"";position:absolute;inset:-20px;border:1.5px dashed var(--tiret);border-radius:40px;pointer-events:none}
+.carte-principale{grid-area:centre}
+.kpi-pv{grid-area:pv} .kpi-jour{grid-area:jour} .kpi-liq{grid-area:liq} .kpi-ligne{grid-area:ligne}
+@media (max-width:1100px){.scene{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto;
+  grid-template-areas:"centre centre" "pv liq" "jour ligne"}}
+@media (max-width:560px){.scene{grid-template-columns:minmax(0,1fr);gap:14px;margin:6px 0 26px;
+  grid-template-areas:"centre" "pv" "liq" "jour" "ligne"}.scene::before{display:none}}
 .carte{position:relative;background:var(--carte);border:1px solid var(--line);border-radius:22px;box-shadow:var(--ombre-carte)}
 .carte h3{margin:0;font-size:13.5px;font-weight:600;letter-spacing:-.005em}
-.cote{padding:18px 20px 20px}
-.colonne-cote{display:grid;gap:34px;align-content:center}
-@media (max-width:640px){.colonne-cote{gap:18px}}
-.empile{margin-bottom:12px}
-.empile::after{content:"";position:absolute;left:16px;right:16px;bottom:-12px;height:28px;z-index:-1;background:var(--carte);
-  border:1px solid var(--line);border-radius:0 0 18px 18px;box-shadow:var(--ombre-carte)}
-.cote-tete{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.cote-info{font-size:11.5px;color:var(--ink-3)}
-.cote-montant{margin:16px 0 0;font-size:23px;font-weight:700;letter-spacing:-.025em;font-variant-numeric:tabular-nums;line-height:1.2}
-.cote-pied{margin:9px 0 0;font-size:11.5px;color:var(--ink-3);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.kpi{display:flex;flex-direction:column;padding:18px 20px;min-width:0}
+.kpi .cote-pied{margin-top:auto;padding-top:12px}
+.cote-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:22px}
+.cote-montant{margin:14px 0 0;font-size:23px;font-weight:700;letter-spacing:-.025em;font-variant-numeric:tabular-nums;line-height:1.2;
+  overflow-wrap:anywhere}
+.cote-pied{margin:0;font-size:11.5px;color:var(--ink-3);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .lien-menthe{border:0;background:none;padding:2px 0;font-size:12.5px;font-weight:500;color:var(--menthe-fonce)}
 .lien-menthe:hover{text-decoration:underline;text-underline-offset:3px}
 .pastille-m{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:7px;font-size:12px;font-weight:600;
@@ -312,42 +314,29 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
 .bulle-graphe .tot b{font-variant-numeric:tabular-nums;color:var(--ink)}
 .cp-note{margin:6px 0 0;font-size:11.5px;color:var(--ink-3)}
 
-/* répartition : barres rayées */
-.rep{display:grid;margin-top:8px}
-.rep-ligne{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 6px;margin:0 -6px;width:calc(100% + 12px);
-  border-radius:10px;cursor:pointer;transition:opacity .2s,background .15s}
-.rep-ligne:hover{background:var(--sunk)}
-.rep-ligne + .rep-ligne{border-top:1px dashed var(--line);border-radius:0 0 10px 10px}
-.rep-tete{display:flex;align-items:baseline;gap:8px;font-size:13px}
-.rep-tete b{font-weight:600}
-.rep-tete .montant{margin-left:auto;font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums}
-.rayure{position:relative;display:block;height:18px;margin-top:6px;border-radius:99px;background:var(--sunk);overflow:hidden}
+/* barres rayées : ligne principale et poids de chaque titre */
+.rayure{position:relative;display:block;height:20px;border-radius:99px;background:var(--sunk);overflow:hidden}
 .rayure > span{position:absolute;inset:0 auto 0 0;width:0;border-radius:99px;
-  background:repeating-linear-gradient(-45deg,var(--c) 0 7px,color-mix(in srgb,var(--c) 72%,var(--carte)) 7px 14px);
-  transition:width 1s cubic-bezier(.2,.8,.2,1) calc(var(--i,0) * 90ms + .1s)}
+  background:repeating-linear-gradient(-45deg,var(--c,var(--menthe)) 0 7px,color-mix(in srgb,var(--c,var(--menthe)) 72%,var(--carte)) 7px 14px);
+  transition:width 1s cubic-bezier(.2,.8,.2,1) calc(var(--i,0) * 70ms + .1s)}
 .rayure.liq > span{background:repeating-linear-gradient(-45deg,var(--ink-3) 0 2px,transparent 2px 6px)}
 .rayure em{position:absolute;top:0;bottom:0;display:flex;align-items:center;font-style:normal;font-size:10.5px;font-weight:600;
-  color:var(--ink-2);padding:0 7px;font-variant-numeric:tabular-nums;animation:fondu .4s calc(var(--i,0) * 90ms + .8s) both}
-.rayure em.dedans{color:#083B38}
-.rayure em.clair{color:#F0FDFA}
-.cote-vide{margin:14px 0 0;font-size:12.5px;color:var(--ink-3)}
-.pf2.focalise .rep-ligne:not(.actif){opacity:.35}
+  color:var(--ink-2);padding:0 8px;font-variant-numeric:tabular-nums;animation:fondu .4s .9s both}
+.rayure em.dedans{color:#F0FDFA}
+.kpi-ligne .rayure{margin-top:12px}
+.mini-rayure{width:64px;height:8px;flex:none}
+.mini-rayure > span{background:repeating-linear-gradient(-45deg,var(--c,var(--menthe)) 0 4px,color-mix(in srgb,var(--c,var(--menthe)) 70%,var(--carte)) 4px 8px)}
 
 /* appel à l'assistant */
 .cta{display:flex;justify-content:center;margin:8px 16px 36px}
-.bouton-petrole{display:flex;align-items:center;gap:12px;padding:11px 24px 11px 16px;border-radius:14px;
-  border:1px solid rgba(255,255,255,.08);color:#F0FDFA;text-align:left;
-  background:linear-gradient(165deg,var(--petrole-clair),var(--petrole) 72%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 14px 30px -12px rgba(11,58,59,.75);transition:transform .18s,box-shadow .18s}
-.bouton-petrole:hover{transform:translateY(-2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 22px 38px -14px rgba(11,58,59,.8)}
-.bouton-petrole:active{transform:none}
-.bouton-petrole svg{color:#5EEAD4}
-.bouton-petrole b{display:block;font-size:14.5px;font-weight:600;line-height:1.3}
-.bouton-petrole small{display:block;font-size:12.5px;opacity:.8}
+.cta-bouton{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;font-weight:500}
+.cta-bouton svg{flex:none}
 
 /* mes titres */
-.pf2-titres{max-width:1000px;margin:0 auto 44px;padding:20px 22px 16px}
-@media (max-width:640px){.pf2-titres{margin:0 14px 30px;padding:16px 14px 12px}}
+.pf2-titres{margin:0 0 44px;padding:20px 22px 16px}
+/* même police que le reste de la fenêtre, chiffres de largeur égale pour rester alignés */
+.pf2-titres .mono{font-family:Inter,"Segoe UI",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+@media (max-width:640px){.pf2-titres{margin:0 0 30px;padding:16px 14px 12px}}
 .pf-section-tete{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
 .pf-section-tete .compte{color:var(--ink-3);font-weight:500;margin-left:3px}
 .bouton.petit{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;font-size:12.5px;font-weight:500}
@@ -363,7 +352,7 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
 .pos{border-bottom:1px solid var(--line);transition:opacity .2s,transform .22s}
 .pos:first-child{border-top:1px solid var(--line)}
 .pos.liq{margin-top:14px;border-top:1px solid var(--line)}
-.pos-tete{display:grid;grid-template-columns:10px minmax(0,1fr) auto 50px 14px;align-items:center;gap:12px;width:100%;
+.pos-tete{display:grid;grid-template-columns:10px minmax(0,1fr) auto 124px 14px;align-items:center;gap:12px;width:100%;
   padding:12px 8px;border:0;background:none;text-align:left;border-radius:8px;cursor:pointer;transition:background .15s,opacity .2s}
 .pos-tete:hover,.pos.actif .pos-tete,.pos.ouvert .pos-tete{background:var(--hover)}
 .pf2.focalise .pos:not(.actif):not(.ouvert) .pos-tete{opacity:.5}
@@ -374,7 +363,8 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
 .pos-val{text-align:right}
 .pos-val b{font-size:13px;font-weight:500}
 .pos-val small.hausse{color:var(--vert)} .pos-val small.baisse{color:var(--rouge)}
-.pos-poids{text-align:right;font-size:12px;color:var(--ink-2)}
+.pos-poids{display:flex;align-items:center;justify-content:flex-end;gap:9px;font-size:12px;color:var(--ink-2)}
+.pos-poids .mono{min-width:46px;text-align:right}
 .pos-tete .chev{color:var(--ink-3);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
 .pos.ouvert .pos-tete .chev{transform:rotate(180deg);color:var(--ink)}
 .badge{font-size:10.5px;font-weight:500;color:var(--ambre);background:color-mix(in srgb,var(--ambre) 14%,transparent);
@@ -422,7 +412,7 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
 
 @media (prefers-reduced-motion:reduce){
   .pf2,#voile,.depliant,.pos,.pos-tete,.pos-tete .chev,.squelette,.pos.eclat .pos-tete,.bouton.petit svg,.rayure > span,
-  .rayure em,.graphe .aire,.bouton-petrole,.bouton-carte,.attente::after,.outil .spin{animation:none!important;transition:none!important}
+  .rayure em,.graphe .aire,.bouton-carte,.attente::after,.outil .spin{animation:none!important;transition:none!important}
   .graphe .ligne.trace{stroke-dasharray:none;stroke-dashoffset:0}
 }
 </style>
@@ -565,7 +555,8 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
 <div id="voile" hidden></div>
 <div id="panneau" class="pf2" role="dialog" aria-modal="true" aria-labelledby="titre-panneau" hidden>
   <header class="pf2-tete">
-    <span class="insigne"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="13" width="4.4" height="8" rx="1.4" fill="currentColor" opacity=".45"/><rect x="9.8" y="8" width="4.4" height="13" rx="1.4" fill="currentColor" opacity=".72"/><rect x="16.6" y="3" width="4.4" height="18" rx="1.4" fill="currentColor"/></svg></span>
+    <div class="pf2-marque"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="13" width="4.4" height="8" rx="1.4" fill="currentColor" opacity=".32"/><rect x="9.8" y="8" width="4.4" height="13" rx="1.4" fill="currentColor" opacity=".62"/><rect x="16.6" y="3" width="4.4" height="18" rx="1.4" fill="currentColor"/></svg><span>MANSA</span></div>
+    <span class="pf2-sep" aria-hidden="true"></span>
     <div class="titre">
       <h2 id="titre-panneau">Mon portefeuille</h2>
       <p id="pf-seance"></p>
@@ -574,14 +565,10 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
   </header>
+  <div class="pf2-corps">
   <div class="alerte" id="alerte-marche" role="status" hidden></div>
 
   <div class="scene">
-    <section class="carte cote empile" aria-labelledby="rep-titre">
-      <div class="cote-tete"><h3 id="rep-titre">Répartition</h3><span class="cote-info" id="rep-info"></span></div>
-      <div class="rep" id="pf-repartition"></div>
-    </section>
-
     <section class="carte carte-principale" aria-labelledby="cp-titre">
       <div class="cp-tete">
         <h3 id="cp-titre">Valeur totale</h3>
@@ -605,22 +592,34 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
       <p class="cp-note">Valeur de tes titres actuels à chaque séance, à quantités constantes.</p>
     </section>
 
-    <div class="colonne-cote">
-      <section class="carte cote" aria-labelledby="pv-titre">
-        <div class="cote-tete"><h3 id="pv-titre">Plus-value latente</h3></div>
-        <p class="cote-montant montant" id="pf-pv">—</p>
-        <p class="cote-pied"><span class="pastille-m" id="pf-pv-pct" hidden></span>par rapport à ton prix de revient</p>
-      </section>
-      <section class="carte cote empile" aria-labelledby="liq-titre">
-        <div class="cote-tete"><h3 id="liq-titre">Liquidités</h3><button type="button" class="lien-menthe" id="pf-liq-modifier">Modifier</button></div>
-        <p class="cote-montant montant" id="pf-liq">—</p>
-        <p class="cote-pied"><span class="pastille-m neutre" id="pf-liq-pct">—</span>du portefeuille, disponibles pour investir</p>
-      </section>
-    </div>
+    <section class="carte kpi kpi-pv" aria-labelledby="pv-titre">
+      <div class="cote-tete"><h3 id="pv-titre">Plus-value latente</h3></div>
+      <p class="cote-montant montant" id="pf-pv">—</p>
+      <p class="cote-pied"><span class="pastille-m" id="pf-pv-pct" hidden></span>par rapport à ton prix de revient</p>
+    </section>
+
+    <section class="carte kpi kpi-jour" aria-labelledby="jour-titre">
+      <div class="cote-tete"><h3 id="jour-titre">Variation du jour</h3></div>
+      <p class="cote-montant montant" id="pf-jour">—</p>
+      <p class="cote-pied"><span class="pastille-m" id="pf-jour-pct" hidden></span><span id="pf-jour-lib"></span></p>
+    </section>
+
+    <section class="carte kpi kpi-liq" aria-labelledby="liq-titre">
+      <div class="cote-tete"><h3 id="liq-titre">Liquidités</h3><button type="button" class="lien-menthe" id="pf-liq-modifier">Modifier</button></div>
+      <p class="cote-montant montant" id="pf-liq">—</p>
+      <p class="cote-pied"><span class="pastille-m neutre" id="pf-liq-pct">—</span>du portefeuille</p>
+    </section>
+
+    <section class="carte kpi kpi-ligne" aria-labelledby="lp-titre">
+      <div class="cote-tete"><h3 id="lp-titre">Ligne principale</h3><button type="button" class="lien-menthe" id="pf-lp-voir" hidden>Voir</button></div>
+      <p class="cote-montant" id="pf-lp">—</p>
+      <span class="rayure" id="pf-lp-barre" aria-hidden="true" hidden><span></span><em></em></span>
+      <p class="cote-pied"><span class="montant" id="pf-lp-valeur"></span><span class="badge" id="pf-lp-badge" hidden>Poids élevé</span><span id="pf-lp-lib"></span></p>
+    </section>
   </div>
 
   <div class="cta">
-    <button type="button" class="bouton-petrole" id="pf-analyser"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 2.5l1.6 4.7 4.7 1.6-4.7 1.6L10 15.1 8.4 10.4 3.7 8.8l4.7-1.6z"/><path d="M17.5 13l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" opacity=".75"/><path d="M5.5 16l.6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6z" opacity=".55"/></svg><span><b>Analyser mon portefeuille</b><small>Demander l'avis de l'assistant</small></span></button>
+    <button type="button" class="bouton plein cta-bouton" id="pf-analyser"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 2.5l1.6 4.7 4.7 1.6-4.7 1.6L10 15.1 8.4 10.4 3.7 8.8l4.7-1.6z"/><path d="M17.5 13l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" opacity=".7"/></svg>Analyser mon portefeuille</button>
   </div>
 
   <section class="carte pf2-titres" aria-labelledby="pf-titres">
@@ -644,6 +643,7 @@ input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
     <ul class="pf-liste" id="pf-liste"></ul>
     <div class="message" id="message-position" role="status"></div>
   </section>
+  </div>
   <datalist id="liste-tickers"></datalist>
 </div>
 
@@ -762,7 +762,8 @@ let pf = null;               // dernier portefeuille reçu
 let totalAffiche = 0;        // valeur affichée du total, point de départ du comptage
 let aEclairer = null;        // ligne à mettre en valeur au prochain affichage
 let listeEnAttente = null;   // mise à jour reportée pendant une saisie
-let repAnimee = false;       // les barres de répartition ne se remplissent qu'à l'ouverture
+let repAnimee = false;       // les barres de poids ne se remplissent qu'à l'ouverture
+let animerBarres = false, rangBarre = 0;
 let periode = "6m", histo = null;
 const mouvementReduit = matchMedia("(prefers-reduced-motion: reduce)");
 const TEINTES = ["#0F766E", "#14B8A6", "#2DD4BF", "#5EEAD4", "#99F6E4"];
@@ -933,68 +934,76 @@ function dessinerPanneau(p) {
   } else alerte.hidden = true;
 
   compter(p.total);
-  $("pf-pv").textContent = p.cout_titres ? signe(p.plus_value, fcfa(p.plus_value)) : "—";
-  const pct = $("pf-pv-pct");
-  pct.hidden = p.plus_value_pct == null;
-  if (p.plus_value_pct != null) {
-    pct.textContent = (p.plus_value_pct >= 0 ? "↑ " : "↓ ") + nombre(Math.abs(p.plus_value_pct), 1) + " %";
-    pct.className = "pastille-m" + (p.plus_value_pct < 0 ? " baisse" : "");
-  }
-  $("pf-liq").textContent = fcfa(p.liquidites);
-  $("pf-liq-pct").textContent = p.poids_liquidites_pct == null ? "0 %" : nombre(p.poids_liquidites_pct, 1) + " %";
   $("pf-compte").textContent = p.lignes.length ? " (" + p.lignes.length + ")" : "";
-
   const pts = parts(p);
-  dessinerRepartition(pts);
+  dessinerIndicateurs(p, pts);
   const saisie = document.activeElement;
   if ($("pf-liste").contains(saisie) && saisie.tagName === "INPUT") { listeEnAttente = p; return; }
   dessinerListe(p, pts);
 }
 
-function dessinerRepartition(pts) {
-  const boite = $("pf-repartition"); boite.replaceChildren();
-  const titres = pts.filter((x) => !x.liquide).length;
-  $("rep-info").textContent = titres ? titres + (titres > 1 ? " titres" : " titre") : "";
-  if (!pts.length) { boite.appendChild(el("p", "cote-vide", "Ajoute un titre pour voir sa part dans le portefeuille.")); return; }
+function pastille(el_, pct, decimales) {
+  el_.hidden = pct == null;
+  if (pct == null) return;
+  el_.textContent = (pct >= 0 ? "↑ " : "↓ ") + nombre(Math.abs(pct), decimales) + " %";
+  el_.className = "pastille-m" + (pct < 0 ? " baisse" : "");
+}
+
+// Les quatre cartes autour de la carte principale.
+function dessinerIndicateurs(p, pts) {
+  // plus-value latente
+  $("pf-pv").textContent = p.cout_titres ? signe(p.plus_value, fcfa(p.plus_value)) : "—";
+  pastille($("pf-pv-pct"), p.plus_value_pct, 1);
+
+  // variation de la dernière séance
+  const seance = p.variation_seance;
+  $("pf-jour").textContent = seance == null ? "—" : signe(seance, fcfa(seance));
+  pastille($("pf-jour-pct"), p.variation_seance_pct, 2);
+  $("pf-jour-lib").textContent = seance == null
+    ? (p.lignes.length ? "Pas de cours pour la dernière séance" : "Aucun titre pour l'instant")
+    : p.date_seance ? "séance du " + dateFr(p.date_seance, true) : "dernière séance";
+
+  // liquidités
+  $("pf-liq").textContent = fcfa(p.liquidites);
+  $("pf-liq-pct").textContent = p.poids_liquidites_pct == null ? "0 %" : nombre(p.poids_liquidites_pct, 1) + " %";
+
+  // ligne principale : le titre le plus lourd
+  const top = pts.find((x) => !x.liquide);
+  const barre = $("pf-lp-barre"), plein = barre.firstElementChild, etiquette = barre.querySelector("em");
+  $("pf-lp-voir").hidden = barre.hidden = !top;
+  $("pf-lp-badge").hidden = !top || top.poids < 40;
+  if (!top) {
+    $("pf-lp").textContent = "—"; $("pf-lp-valeur").textContent = "";
+    $("pf-lp-lib").textContent = "Ajoute un titre pour voir ta ligne la plus lourde.";
+    return;
+  }
+  $("pf-lp").textContent = top.nom;
+  $("pf-lp-valeur").textContent = fcfa(top.valeur);
+  $("pf-lp-lib").textContent = top.poids >= 40 ? "" : "ta plus grosse position";
+  plein.style.setProperty("--c", top.couleur);
+  etiquette.textContent = nombre(top.poids, 1) + " %";
+  etiquette.className = top.poids >= 22 ? "dedans" : "";
+  etiquette.style.left = top.poids >= 22 ? "" : top.poids + "%";
+  etiquette.style.right = top.poids >= 22 ? (100 - top.poids) + "%" : "";
   const animer = !repAnimee && !mouvementReduit.matches;
-  repAnimee = true;
-  pts.forEach((pt, i) => {
-    const ligne = el("button", "rep-ligne"); ligne.type = "button"; ligne.dataset.t = pt.cle;
-    ligne.title = pt.liquide ? "Modifier les liquidités" : "Voir la ligne " + pt.nom;
-    const tete = el("span", "rep-tete");
-    tete.append(el("b", "", pt.nom), el("span", "montant", fcfa(pt.valeur)));
-    const barre = el("span", "rayure" + (pt.liquide ? " liq" : ""));
-    const plein = el("span"); plein.style.setProperty("--i", i);
-    if (!pt.liquide) plein.style.setProperty("--c", pt.couleur);
-    const etiquette = el("em", "", nombre(pt.poids, 1) + " %"); etiquette.style.setProperty("--i", i);
-    if (pt.poids >= 18) {
-      etiquette.classList.add("dedans"); etiquette.style.right = (100 - pt.poids) + "%";
-      if (pt.rang === 0) etiquette.classList.add("clair");
-    } else etiquette.style.left = pt.poids + "%";
-    if (!animer) { plein.style.transition = "none"; plein.style.width = pt.poids + "%"; etiquette.style.animation = "none"; }
-    barre.append(plein, etiquette);
-    ligne.append(tete, barre);
-    ligne.onpointerenter = () => focaliser(pt.cle);
-    ligne.onpointerleave = () => focaliser(null);
-    ligne.onfocus = () => focaliser(pt.cle);
-    ligne.onblur = () => focaliser(null);
-    ligne.onclick = () => {
-      const li = $("pf-liste").querySelector('[data-t="' + CSS.escape(pt.cle) + '"]');
-      if (li) deplier(li);
-    };
-    boite.appendChild(ligne);
-    if (animer) requestAnimationFrame(() => requestAnimationFrame(() => { plein.style.width = pt.poids + "%"; }));
-  });
+  if (animer) {
+    plein.style.transition = ""; plein.style.width = "0";
+    requestAnimationFrame(() => requestAnimationFrame(() => { plein.style.width = top.poids + "%"; }));
+  } else { plein.style.transition = "none"; plein.style.width = top.poids + "%"; }
+  $("pf-lp-voir").onclick = () => {
+    const li = $("pf-liste").querySelector('[data-t="' + CSS.escape(top.cle) + '"]');
+    if (li) deplier(li);
+  };
 }
 
 function focaliser(cle) {
   const panneau = $("panneau");
   panneau.classList.toggle("focalise", !!cle);
-  panneau.querySelectorAll(".rep-ligne, .pos").forEach((x) => x.classList.toggle("actif", !!cle && x.dataset.t === cle));
+  panneau.querySelectorAll(".pos").forEach((x) => x.classList.toggle("actif", !!cle && x.dataset.t === cle));
 }
 
 // ------------------------------------------------------------------ courbe
-const G = { W: 560, H: 230, L: 46, R: 10, T: 12, B: 26 };
+const G = { W: 560, H: 230, L: 46, R: 10, T: 12, B: 26 };   // W suit la largeur réelle de la carte
 const compact = new Intl.NumberFormat("fr-FR", { notation: "compact", maximumFractionDigits: 1 });
 const SVG = "http://www.w3.org/2000/svg";
 function sv(tag, attrs) { const x = document.createElementNS(SVG, tag); for (const k in attrs) x.setAttribute(k, attrs[k]); return x; }
@@ -1004,6 +1013,15 @@ document.querySelectorAll(".periodes button").forEach((b) => b.onclick = () => {
   document.querySelectorAll(".periodes button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
   chargerHistorique();
 });
+
+// la carte change de largeur (fenêtre redimensionnée, rotation) : on redessine à la nouvelle taille
+let largeurGraphe = 0;
+new ResizeObserver(() => {
+  const l = $("pf-graphe").clientWidth;
+  if (!histo || $("panneau").hidden || !l || Math.abs(l - largeurGraphe) < 8) return;
+  clearTimeout(chargerHistorique.minuterie);
+  chargerHistorique.minuterie = setTimeout(() => dessinerGraphe(histo, false), 120);
+}).observe($("pf-graphe"));
 
 async function chargerHistorique() {
   const demande = periode;
@@ -1026,8 +1044,13 @@ function graduations(min, max) {
   return t;
 }
 
-function dessinerGraphe(h) {
+function dessinerGraphe(h, animer = true) {
   const svg = $("pf-svg"); svg.replaceChildren(); cacherBulle();
+  // dessin à la taille réelle : un viewBox fixe étiré grossirait le texte sur grand écran et le rétrécirait sur mobile
+  largeurGraphe = $("pf-graphe").clientWidth;
+  G.W = Math.max(280, Math.round(largeurGraphe || 560));
+  G.H = G.W < 420 ? 200 : 230;
+  svg.setAttribute("viewBox", "0 0 " + G.W + " " + G.H);
   const vide = $("pf-graphe-vide");
   const evol = $("pf-evol");
   if (!h.dates.length || h.total.every((v) => !v)) {
@@ -1069,7 +1092,7 @@ function dessinerGraphe(h) {
   svg.appendChild(sv("path", { class: "aire", d: trace + " L" + X(n - 1).toFixed(1) + " " + (G.H - G.B) + " L" + X(0).toFixed(1) + " " + (G.H - G.B) + " Z", fill: "url(#pf-degrade)" }));
   const ligne = sv("path", { class: "ligne", d: trace });
   svg.appendChild(ligne);
-  if (!mouvementReduit.matches) { ligne.style.setProperty("--long", ligne.getTotalLength()); ligne.classList.add("trace"); }
+  if (animer && !mouvementReduit.matches) { ligne.style.setProperty("--long", ligne.getTotalLength()); ligne.classList.add("trace"); }
 
   const curseur = sv("line", { class: "curseur", y1: G.T, y2: G.H - G.B, visibility: "hidden" });
   const point = sv("circle", { class: "point", r: 5, visibility: "hidden" });
@@ -1133,6 +1156,7 @@ function cacherBulle() { $("pf-bulle").hidden = true; }
 // ------------------------------------------------------------------ mes titres
 function dessinerListe(p, pts) {
   listeEnAttente = null;
+  animerBarres = !repAnimee && !mouvementReduit.matches; repAnimee = true; rangBarre = 0;
   const ouverte = $("pf-liste").querySelector(".pos.ouvert");
   const garderOuverte = ouverte ? ouverte.dataset.t : null;
   const liste = $("pf-liste"); liste.replaceChildren();
@@ -1159,7 +1183,19 @@ function enTete(li, nuance, nom, detailNom, valeur, detailValeur, classeDetail, 
   const bloc = el("span", "pos-nom"); bloc.append(nom, el("small", "", detailNom));
   const val = el("span", "pos-val");
   val.append(el("b", "mono", valeur), el("small", "mono " + (classeDetail || ""), detailValeur));
-  tete.append(n, bloc, val, el("span", "pos-poids mono", poids));
+  // poids : barre rayée à la couleur du titre, puis le pourcentage
+  const cellule = el("span", "pos-poids");
+  const barre = el("span", "rayure mini-rayure" + (nuance === "liquide" ? " liq" : ""));
+  barre.setAttribute("aria-hidden", "true");
+  const plein = el("span");
+  if (nuance && nuance !== "liquide") plein.style.setProperty("--c", nuance);
+  plein.style.setProperty("--i", rangBarre++);
+  barre.appendChild(plein);
+  cellule.append(barre, el("span", "mono", poids));
+  tete.append(n, bloc, val, cellule);
+  const largeur = parseFloat(String(poids).replace(",", ".")) || 0;
+  if (animerBarres) requestAnimationFrame(() => requestAnimationFrame(() => { plein.style.width = largeur + "%"; }));
+  else { plein.style.transition = "none"; plein.style.width = largeur + "%"; }
   tete.insertAdjacentHTML("beforeend", '<svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>');
   tete.onclick = () => (li.classList.contains("ouvert") ? replier(li) : deplier(li));
   tete.onfocus = () => focaliser(li.dataset.t);
