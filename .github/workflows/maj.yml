@@ -13,6 +13,11 @@ concurrency:
   group: maj-donnees
   cancel-in-progress: false
 
+defaults:
+  run:
+    # Le projet vit dans brvm-data/ : toutes les commandes partent de la.
+    working-directory: brvm-data
+
 jobs:
   collecte:
     runs-on: ubuntu-latest
