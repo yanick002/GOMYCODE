@@ -39,7 +39,8 @@ jobs:
         # Sert a la valorisation et au capital echange. Releve chaque jour
         # plutot que fige : c'est ce qui rattrapera automatiquement le
         # fractionnement Sonatel du 26 octobre 2026 (1 pour 10). En cas
-        # d'echec, la valeur precedente est conservee.
+        # d'echec, la valeur precedente est conservee : ne bloque pas le job.
+        continue-on-error: true
         run: python scraper/faire_actions.py
 
       - name: Collecter les cours

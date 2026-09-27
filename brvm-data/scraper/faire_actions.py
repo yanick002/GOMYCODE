@@ -32,7 +32,9 @@ def lire(ticker):
     texte = re.sub(r"<[^>]+>", " ", re.sub(r"<script.*?</script>", "", html, flags=re.S))
     m = re.search(r"Nombre de titres\s*:?\s*([0-9][0-9\s  ]*)", texte)
     if not m:
-        raise ValueError("champ 'Nombre de titres' absent de la fiche")
+        titre = re.search(r"<title>(.*?)</title>", html, re.S)
+        raise ValueError("champ 'Nombre de titres' absent de la fiche (HTTP %s, %d octets, titre : %r)"
+                         % (r.status, len(html), titre.group(1).strip()[:60] if titre else None))
     n = int(re.sub(r"[^0-9]", "", m.group(1)))
     if n <= 0:
         raise ValueError("nombre de titres nul")
