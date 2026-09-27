@@ -1,0 +1,67 @@
+name: Mise a jour des donnees BRVM
+
+on:
+  schedule:
+    # 16h30 UTC, du lundi au vendredi. La BRVM ferme a 15h00 UTC.
+    - cron: "30 16 * * 1-5"
+  workflow_dispatch:        # bouton "Run workflow" pour lancer a la main
+
+permissions:
+  contents: write           # necessaire pour que le job puisse commiter
+
+concurrency:
+  group: maj-donnees
+  cancel-in-progress: false
+
+jobs:
+  collecte:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Aucune dependance externe : les scripts n'utilisent que la
+      # bibliotheque standard. Rien a installer.
+
+      - name: Relever le nombre de titres
+        # Sert a la valorisation et au capital echange. Releve chaque jour
+        # plutot que fige : c'est ce qui rattrapera automatiquement le
+        # fractionnement Sonatel du 26 octobre 2026 (1 pour 10). En cas
+        # d'echec, la valeur precedente est conservee.
+        run: python scraper/faire_actions.py
+
+      - name: Collecter les cours
+        # 49 actions + 18 indices. Echoue si plus de la moitie des tickers
+        # tombent, ou si aucune seance fraiche depuis 3 jours ouvres.
+        run: python scraper/collecte.py
+
+      - name: Calculer les indicateurs
+        # RSI de Wilder, Beta contre le BRVM Composite, variations par
+        # fenetre. Le serveur MCP ne calcule rien : il lit ces fichiers.
+        run: python scraper/indicateurs.py
+
+      - name: Controler le RSI contre la reference
+        # Compare notre calcul a celui affiche par richbourse sur un
+        # echantillon. Ne fait pas echouer le job : c'est un signal, pas une
+        # dependance. Une divergence apparait en rouge dans le journal.
+        continue-on-error: true
+        run: python scraper/controle_rsi.py
+
+      - name: Commiter les donnees
+        run: |
+          git config user.name "brvm-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ scraper/actions.json
+          if git diff --staged --quiet; then
+            echo "Aucun changement, rien a commiter."
+          else
+            git commit -m "Donnees du $(date -u +%Y-%m-%d)"
+            git push
+          fi

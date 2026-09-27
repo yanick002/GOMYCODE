@@ -1,0 +1,24 @@
+{
+  "_source": "richbourse.com/common/mouvements/indice-donnees?alias_indice={ALIAS}&complet=1",
+  "_note": "Cle de gauche = ticker court attendu par le serveur MCP. Cle de droite = alias utilise par richbourse. Les sept indices sectoriels d'avant la reforme (BRVMAG, BRVMAS, BRVMDI, BRVMFI, BRVMIN, BRVMSP, BRVMTR) sont geles au 31/12/2025 : ils ont ete remplaces par la nouvelle nomenclature sectorielle au 02/01/2025, puis arretes. On les collecte quand meme, leur historique remonte a 1999.",
+  "indices": {
+    "BRVMC": "BRVM-COMPOSITE",
+    "BRVM30": "BRVM-30",
+    "BRVMPR": "BRVM-PRESTIGE",
+    "BRVMPA": "BRVM-PRINCIPAL",
+    "BRVM-CB": "BRVM-CONSOMMATION-DE-BASE",
+    "BRVM-CD": "BRVM-CONSOMMATION-DISCRETIONNAIRE",
+    "BRVM-EN": "BRVM-ENERGIE",
+    "BRVM-IN": "BRVM-INDUSTRIELS",
+    "BRVM-SF": "BRVM-SERVICES-FINANCIERS",
+    "BRVM-SP": "BRVM-SERVICES-PUBLICS",
+    "BRVM-TEL": "BRVM-TELECOMMUNICATIONS",
+    "BRVMAG": "BRVM-AGRICULTURE",
+    "BRVMAS": "BRVM-AUTRES-SECTEURS",
+    "BRVMDI": "BRVM-DISTRIBUTION",
+    "BRVMFI": "BRVM-FINANCES",
+    "BRVMIN": "BRVM-INDUSTRIE",
+    "BRVMSP": "BRVM-SERVICES-PUBLICS-ANCIEN",
+    "BRVMTR": "BRVM-TRANSPORT"
+  }
+}
