@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portefeuille BRVM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/15.0.7/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js"></script>
+<style>
+/* ============================ jetons (repris de MANSA) ============================ */
+:root{
+  color-scheme:light;
+  --fond:#DEE1E5; --app:#FFFFFF; --rail:#FCFCFC; --sunk:#F4F4F5; --hover:#F0F0F1; --line:#E9E9EB;
+  --ink:#0A0A0A; --ink-2:#4B5563; --ink-3:#9CA3AF; --noir:#111113; --sur-noir:#FFFFFF;
+  --vert:#15803D; --bleu:#2563EB; --ambre:#B45309; --rouge:#B91C1C;
+  --ombre-s:0 1px 2px rgba(9,9,11,.05);
+  --ombre-m:0 1px 3px rgba(9,9,11,.08),0 1px 2px rgba(9,9,11,.04);
+  --ombre-l:0 16px 44px rgba(9,9,11,.14),0 2px 8px rgba(9,9,11,.06);
+  --large:760px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --fond:#08080A; --app:#0F0F11; --rail:#0B0B0D; --sunk:#191A1D; --hover:#1F2024; --line:#232427;
+    --ink:#FAFAFA; --ink-2:#A1A1AA; --ink-3:#6E7079; --noir:#FAFAFA; --sur-noir:#0A0A0A;
+    --vert:#4ADE80; --bleu:#60A5FA; --ambre:#FBBF24; --rouge:#F87171;
+    --ombre-s:0 1px 2px rgba(0,0,0,.5); --ombre-m:0 1px 3px rgba(0,0,0,.6); --ombre-l:0 16px 44px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --fond:#08080A; --app:#0F0F11; --rail:#0B0B0D; --sunk:#191A1D; --hover:#1F2024; --line:#232427;
+  --ink:#FAFAFA; --ink-2:#A1A1AA; --ink-3:#6E7079; --noir:#FAFAFA; --sur-noir:#0A0A0A;
+  --vert:#4ADE80; --bleu:#60A5FA; --ambre:#FBBF24; --rouge:#F87171;
+  --ombre-s:0 1px 2px rgba(0,0,0,.5); --ombre-m:0 1px 3px rgba(0,0,0,.6); --ombre-l:0 16px 44px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--fond);color:var(--ink);font:14px/1.6 Inter,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+svg{flex:none}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:6px}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;border:2.5px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-track{background:transparent}
+
+.bouton{border:1px solid var(--line);background:var(--app);border-radius:8px;padding:6px 12px}
+.bouton:hover{background:var(--hover)}
+.bouton.plein{background:var(--noir);color:var(--sur-noir);border-color:var(--noir)}
+.bouton.plein:hover{opacity:.9}
+.bouton:disabled{opacity:.5;cursor:default}
+.lien{border:0;background:none;color:var(--ink-2);padding:4px}
+.lien:hover{color:var(--ink)}
+.hausse{color:var(--vert)} .baisse{color:var(--rouge)}
+
+/* ============================ connexion ============================ */
+#vue-connexion{min-height:100%;display:grid;place-items:center;padding:32px 16px}
+.connexion{width:100%;max-width:380px;padding:28px;background:var(--app);border-radius:16px;box-shadow:var(--ombre-l);position:relative}
+.connexion .marque{padding:0 0 18px}
+.connexion h2{margin:0 0 4px;font-size:20px;letter-spacing:-.02em}
+.connexion p{margin:0 0 20px;color:var(--ink-2);font-size:13px}
+.connexion #theme-connexion{position:absolute;top:16px;right:16px}
+.onglets{display:flex;gap:4px;background:var(--sunk);border-radius:10px;padding:4px;margin-bottom:16px}
+.onglets button{flex:1;border:0;background:none;border-radius:7px;padding:6px;color:var(--ink-2)}
+.onglets button[aria-selected="true"]{background:var(--app);color:var(--ink);box-shadow:var(--ombre-m)}
+label{display:block;font-size:12px;font-weight:500;color:var(--ink-2);margin:12px 0 4px}
+input{width:100%;min-width:0;border:1px solid var(--line);background:var(--app);border-radius:8px;padding:8px 10px}
+input:focus{outline:2px solid var(--bleu);outline-offset:-1px}
+.message{font-size:13px;margin-top:12px;min-height:1.6em}
+.message.erreur{color:var(--rouge)} .message.ok{color:var(--vert)}
+
+/* ============================ fenêtre ============================ */
+.fenetre{position:fixed;inset:12px;background:var(--app);border-radius:16px;box-shadow:var(--ombre-l);overflow:hidden;display:flex}
+@media (max-width:900px){.fenetre{inset:0;border-radius:0}}
+
+/* ============================ rail ============================ */
+#rail{width:246px;flex:none;background:var(--rail);display:flex;flex-direction:column;padding:0 0 14px;overflow-y:auto}
+.filet{height:1px;background:var(--line);margin:0 20px}
+.marque{display:flex;align-items:center;gap:9px;padding:21px 20px 18px}
+.marque h1{margin:0;font-size:17px;font-weight:700;letter-spacing:-.03em;white-space:nowrap}
+.label{font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);padding:20px 20px 9px}
+.liste{padding:0 20px;display:flex;flex-direction:column;gap:1px}
+.item{position:relative;display:flex;align-items:center;gap:9px;width:100%;padding:7px 8px;border:1px solid transparent;
+  border-radius:7px;background:none;font-size:13px;color:var(--ink-2);text-align:left;line-height:1.35}
+.item:hover{background:var(--hover);color:var(--ink)}
+.item .txt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.item .fin{color:var(--ink-3);flex:none;display:flex;align-items:center}
+.item .kbd{font-size:11px;color:var(--ink-3);letter-spacing:.02em}
+.item .pastille{width:7px;height:7px;border-radius:50%;flex:none;margin-left:2px}
+.item.actif{background:var(--app);color:var(--ink);font-weight:500;box-shadow:var(--ombre-m);border-color:var(--line)}
+.item.actif::before{content:"";position:absolute;left:-21px;top:50%;transform:translateY(-50%);width:3px;height:18px;border-radius:0 3px 3px 0;background:var(--ink)}
+.resume{margin:6px 20px 0;padding:10px 12px;border-radius:10px;background:var(--sunk);font-size:12px;color:var(--ink-2);display:grid;gap:2px}
+.resume .ligne{display:flex;justify-content:space-between;gap:8px}
+.resume b{font-weight:600;color:var(--ink)}
+.creux{flex:1;min-height:14px}
+.profil{display:flex;align-items:center;gap:10px;padding:14px 20px 0;margin-top:12px}
+.avatar{width:32px;height:32px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--noir);color:var(--sur-noir);font-weight:600;font-size:12.5px}
+.profil .qui{flex:1;min-width:0}
+.profil b{display:block;font-size:13px;font-weight:600;line-height:1.35}
+.profil small{display:block;font-size:10.5px;color:var(--ink-3);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* rail en tiroir sur petit écran */
+.barre-mobile{display:none}
+#voile-rail{display:none}
+@media (max-width:900px){
+  #rail{position:fixed;top:0;left:0;bottom:0;z-index:30;box-shadow:var(--ombre-l);transform:translateX(-105%);transition:transform .2s ease-out}
+  body.rail-ouvert #rail{transform:none}
+  body.rail-ouvert #voile-rail{display:block;position:fixed;inset:0;background:rgba(9,9,11,.44);z-index:29}
+  .barre-mobile{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .barre-mobile .marque{padding:0;flex:1}
+}
+@media (prefers-reduced-motion:reduce){#rail{transition:none}}
+.rond{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;border:0;background:none;color:var(--ink-2)}
+.rond:hover{background:var(--hover);color:var(--ink)}
+
+/* ============================ zone centrale ============================ */
+#centre{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--app)}
+#fil{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:26px 0 0}
+.colonne{width:100%;max-width:var(--large);margin:0 auto;padding:0 24px;flex:none}
+
+/* accueil : bloc centré, aligné à gauche */
+.accueil{width:100%;max-width:var(--large);margin:auto;padding:0 24px;flex:none}
+.accueil .mark{margin-bottom:16px}
+.accueil h2{margin:0 0 7px;font-size:21px;font-weight:700;letter-spacing:-.025em;line-height:1.25}
+.accueil > p{margin:0 0 18px;font-size:12.5px;color:var(--ink-2)}
+.puces{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.puce{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:8px;background:var(--app);border:1px solid var(--line);
+  font-size:12px;font-weight:500;color:var(--ink-2);box-shadow:var(--ombre-s)}
+.puce:hover{color:var(--ink);border-color:var(--ink-3)}
+
+/* composeur */
+.boite{background:var(--sunk);border-radius:14px;padding:12px;border:1px solid transparent;transition:border-color .14s,background .14s}
+.boite:focus-within{border-color:var(--line);background:var(--hover)}
+.haut{display:flex;align-items:flex-start;gap:8px}
+.modele{display:flex;align-items:center;gap:5px;flex:none;margin-top:1px;background:var(--app);border:1px solid var(--line);
+  border-radius:7px;padding:3px 7px;font-size:11px;font-weight:500;color:var(--ink-2);max-width:45%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#question{flex:1;min-width:0;border:none;background:none;resize:none;outline:none;font:inherit;font-size:14px;line-height:1.55;
+  color:var(--ink);min-height:64px;max-height:190px;padding:2px 0 0}
+#question::placeholder{color:var(--ink-3)}
+.pieds{display:flex;align-items:center;justify-content:flex-end;margin-top:8px;gap:8px}
+.pieds .indice{flex:1;font-size:11px;color:var(--ink-3)}
+.env{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex:none;border:0;background:var(--noir);color:var(--sur-noir);transition:opacity .14s}
+.env:hover:not(:disabled){opacity:.82}
+.env:disabled{background:var(--line);color:var(--ink-3);cursor:not-allowed}
+.zone-bas{flex:none;padding:8px 0 0}
+.zone-bas #zone{max-width:var(--large);margin:0 auto;padding:0 24px}
+.zone-bas #question{min-height:44px}
+
+/* ligne d'état */
+.pied{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-3);padding:10px 24px 14px;flex:none}
+.pied i{display:flex;align-items:center;gap:6px;font-style:normal}
+.pied .pt{width:6px;height:6px;border-radius:50%;background:var(--ink-3)}
+.pied .pt.ok{background:var(--vert)} .pied .pt.ko{background:var(--rouge)}
+.pied .sep{width:3px;height:3px;border-radius:50%;background:var(--line)}
+.pied code{font-family:"IBM Plex Mono",monospace;font-size:10.5px}
+
+/* messages */
+.tour{margin-bottom:24px}
+.tour.moi{display:flex;justify-content:flex-end}
+.moi .bulle{background:var(--sunk);padding:9px 14px;border-radius:14px;border-bottom-right-radius:5px;max-width:84%;white-space:pre-wrap;overflow-wrap:anywhere}
+.lui .qui{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.lui .qui b{font-size:12px;font-weight:600;color:var(--ink-3);letter-spacing:.01em}
+.md>*:first-child{margin-top:0} .md>*:last-child{margin-bottom:0}
+.md h1,.md h2,.md h3,.md h4{font-weight:600;line-height:1.3;margin:22px 0 9px;letter-spacing:-.018em}
+.md h1{font-size:19px}.md h2{font-size:16.5px}.md h3{font-size:14.5px}.md h4{font-size:13.5px}
+.md p{margin:0 0 12px} .md ul,.md ol{margin:0 0 12px;padding-left:19px} .md li{margin-bottom:4px}
+.md li::marker{color:var(--ink-3)} .md strong{font-weight:600}
+.md code{font-family:"IBM Plex Mono",monospace;font-size:.86em;background:var(--sunk);padding:2px 5px;border-radius:5px}
+.md table{border-collapse:collapse;width:100%;margin:0 0 13px;font-size:12.5px;font-variant-numeric:tabular-nums;display:block;overflow-x:auto}
+.md th{background:var(--sunk);text-align:left;padding:7px 10px;font-weight:600;font-size:11.5px;color:var(--ink-2);white-space:nowrap}
+.md td{padding:7px 10px;border-top:1px solid var(--line)}
+.md hr{border:none;border-top:1px solid var(--line);margin:18px 0}
+.outils{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 11px}
+.outil{display:flex;align-items:center;gap:7px;font-size:11px;font-family:"IBM Plex Mono",monospace;color:var(--ink-3);background:var(--sunk);padding:4px 9px;border-radius:99px;max-width:100%}
+.outil b{color:var(--ink-2);font-weight:500}
+.outil .spin{width:6px;height:6px;border-radius:50%;background:var(--ink-3);flex:none;animation:pulse 1.1s ease-in-out infinite}
+.outil.fini .spin{background:var(--vert);animation:none}
+@keyframes pulse{0%,100%{opacity:.2}50%{opacity:1}}
+.attente{font-size:12.5px;color:var(--ink-3)}
+.attente::after{content:"▍";animation:clign 1s steps(2) infinite;margin-left:2px}
+@keyframes clign{0%,50%{opacity:1}51%,100%{opacity:0}}
+.alerte-msg{background:var(--sunk);color:var(--rouge);padding:10px 13px;border-radius:10px;font-size:12.5px}
+
+/* ============================ panneau portefeuille ============================ */
+#voile{position:fixed;inset:0;background:rgba(9,9,11,.44);z-index:40}
+#panneau{position:fixed;top:0;right:0;bottom:0;width:min(780px,100vw);background:var(--app);border-left:1px solid var(--line);
+  box-shadow:var(--ombre-l);z-index:41;overflow-y:auto;padding:18px 20px 24px;animation:glisse .18s ease-out}
+@keyframes glisse{from{transform:translateX(32px);opacity:0}}
+@media (prefers-reduced-motion:reduce){#panneau,.attente::after,.outil .spin{animation:none}}
+.panneau-tete{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.panneau-tete h2{font-size:16px;margin:0;flex:1;letter-spacing:-.02em}
+.alerte{background:var(--sunk);border-left:3px solid var(--ambre);border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:13px}
+.tuiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
+@media (max-width:560px){.tuiles{grid-template-columns:minmax(0,1fr)}}
+.tuile{background:var(--sunk);border-radius:10px;padding:10px 12px;min-width:0}
+.tuile .titre{font-size:12px;color:var(--ink-2)}
+.tuile .valeur{font-size:18px;font-weight:600;overflow-wrap:anywhere}
+.tuile .sous{font-size:12px;color:var(--ink-2)}
+.tuile form{display:flex;gap:6px;margin-top:4px}
+.tuile form input{padding:4px 8px}
+.tuile form .bouton{padding:4px 10px}
+.tableau{overflow-x:auto;margin:0 -4px}
+table.lignes{width:100%;border-collapse:collapse;font-size:13px}
+table.lignes th{font-weight:500;color:var(--ink-2);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.lignes td{text-align:right;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.lignes th:first-child,table.lignes td:first-child{text-align:left}
+td.titre{font-weight:600}
+.vide{color:var(--ink-3);text-align:center!important;padding:24px}
+form.ajout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end;margin-top:14px}
+form.ajout label{margin-top:0}
+@media (max-width:560px){form.ajout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- ============================ connexion ============================ -->
+<main id="vue-connexion" hidden>
+  <div class="connexion">
+    <button class="rond" id="theme-connexion" title="Thème clair / sombre" aria-label="Basculer le thème clair / sombre">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+    </button>
+    <div class="marque">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="13" width="4.4" height="8" rx="1.4" fill="currentColor" opacity=".32"/><rect x="9.8" y="8" width="4.4" height="13" rx="1.4" fill="currentColor" opacity=".62"/><rect x="16.6" y="3" width="4.4" height="18" rx="1.4" fill="currentColor"/></svg>
+      <h1>Portefeuille BRVM</h1>
+    </div>
+    <h2>Bienvenue</h2>
+    <p>Suis ton portefeuille et pose tes questions sur le marché du jour.</p>
+    <div class="onglets" role="tablist">
+      <button role="tab" aria-selected="true" data-mode="connexion">Se connecter</button>
+      <button role="tab" aria-selected="false" data-mode="inscription">Créer un compte</button>
+    </div>
+    <form id="form-connexion">
+      <label for="email">Adresse e-mail</label>
+      <input id="email" type="email" autocomplete="email" required>
+      <label for="mdp">Mot de passe</label>
+      <input id="mdp" type="password" autocomplete="current-password" minlength="6" required>
+      <button class="bouton plein" style="width:100%;margin-top:18px" id="bouton-connexion">Se connecter</button>
+      <div class="message" id="message-connexion" role="status"></div>
+    </form>
+  </div>
+</main>
+
+<!-- ============================ application ============================ -->
+<div class="fenetre" id="vue-app" hidden>
+  <div id="voile-rail"></div>
+  <nav id="rail" aria-label="Navigation">
+    <div class="marque">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="13" width="4.4" height="8" rx="1.4" fill="currentColor" opacity=".32"/><rect x="9.8" y="8" width="4.4" height="13" rx="1.4" fill="currentColor" opacity=".62"/><rect x="16.6" y="3" width="4.4" height="18" rx="1.4" fill="currentColor"/></svg>
+      <h1>Portefeuille BRVM</h1>
+    </div>
+    <div class="filet"></div>
+
+    <div class="label">Conversation</div>
+    <div class="liste">
+      <button class="item actif" id="nouvelle">
+        <span class="txt">Nouvelle conversation</span>
+        <span class="fin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>
+      </button>
+      <div class="item" id="conv-courante" hidden><span class="txt" id="conv-titre"></span></div>
+    </div>
+
+    <div class="label">Espace</div>
+    <div class="liste">
+      <button class="item" id="ouvrir-portefeuille" aria-haspopup="dialog" aria-controls="panneau">
+        <span class="pastille" style="background:var(--bleu)"></span>
+        <span class="txt">Mon portefeuille</span>
+        <span class="kbd">Ctrl 1</span>
+      </button>
+    </div>
+    <div class="resume" id="resume" hidden>
+      <div class="ligne"><span>Valeur totale</span><b class="mono" id="r-total">—</b></div>
+      <div class="ligne"><span>Plus-value</span><span class="mono" id="r-pv">—</span></div>
+      <div class="ligne"><span>Liquidités</span><span class="mono" id="r-liq">—</span></div>
+    </div>
+
+    <div class="creux"></div>
+    <div class="liste">
+      <button class="item" id="theme">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
+        <span class="txt">Thème</span>
+      </button>
+      <button class="item" id="deconnexion">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5"/><path d="M5 12h11"/></svg>
+        <span class="txt">Se déconnecter</span>
+      </button>
+    </div>
+    <div class="filet" style="margin-top:12px"></div>
+    <div class="profil">
+      <div class="avatar" id="avatar" aria-hidden="true">?</div>
+      <div class="qui"><b id="profil-nom">Mon compte</b><small id="profil-email"></small></div>
+    </div>
+  </nav>
+
+  <main id="centre">
+    <div class="barre-mobile">
+      <button class="rond" id="ouvrir-rail" aria-label="Ouvrir le menu" aria-controls="rail">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <div class="marque"><h1>Portefeuille BRVM</h1></div>
+      <button class="rond" id="ouvrir-portefeuille-mobile" aria-label="Mon portefeuille" aria-controls="panneau">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2.5"/><path d="M16 13h2M3 10h18M7 6V4.5A1.5 1.5 0 0 1 8.5 3h7A1.5 1.5 0 0 1 17 4.5V6"/></svg>
+      </button>
+    </div>
+
+    <div id="fil" aria-live="polite">
+      <div class="accueil" id="accueil">
+        <svg class="mark" width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="13" width="4.4" height="8" rx="1.4" fill="currentColor" opacity=".32"/><rect x="9.8" y="8" width="4.4" height="13" rx="1.4" fill="currentColor" opacity=".62"/><rect x="16.6" y="3" width="4.4" height="18" rx="1.4" fill="currentColor"/></svg>
+        <h2>Comment puis-je aider ?</h2>
+        <p>Pose une question sur ton portefeuille ou sur le marché BRVM du jour.</p>
+        <div id="place-zone">
+          <form id="zone">
+            <div class="boite">
+              <div class="haut">
+                <span class="modele" id="modele" title="Modèle utilisé">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="13" width="4.4" height="8" rx="1.4" fill="currentColor" opacity=".32"/><rect x="9.8" y="8" width="4.4" height="13" rx="1.4" fill="currentColor" opacity=".62"/><rect x="16.6" y="3" width="4.4" height="18" rx="1.4" fill="currentColor"/></svg>
+                  <span id="modele-nom">…</span>
+                </span>
+                <textarea id="question" placeholder="Pose ta question…" maxlength="2000" rows="1" aria-label="Ta question"></textarea>
+              </div>
+              <div class="pieds">
+                <span class="indice">Entrée pour envoyer · Maj+Entrée pour aller à la ligne</span>
+                <button class="env" id="envoyer" title="Envoyer" aria-label="Envoyer" disabled>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4l17.5-8.4a.7.7 0 0 0 0-1.2L3.4 2.4a.7.7 0 0 0-1 .8l2 6.7c.1.3.3.5.6.6l7.6 1.4-7.6 1.4c-.3.1-.5.3-.6.6l-2 6.7a.7.7 0 0 0 1 .8z"/></svg>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="puces" id="suggestions">
+          <button class="puce" data-question="Quels titres de la BRVM sont en survente ou en surachat aujourd'hui ? Donne les plus marqués.">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--vert)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+            Scanner le marché
+          </button>
+          <button class="puce" data-question="Analyse mon portefeuille : concentration, plus-values latentes et titres à surveiller.">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--bleu)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9l7.8 4.5"/><circle cx="12" cy="12" r="9"/></svg>
+            Analyser mon portefeuille
+          </button>
+          <button class="puce" data-question="Que faire de mes liquidités vu le marché du jour ?">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ambre)" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Déployer mes liquidités
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="zone-bas" id="zone-bas"></div>
+
+    <div class="pied" id="pied">
+      <i><span class="pt ok"></span>Compte</i>
+      <span class="sep"></span>
+      <i><span class="pt" id="pt-donnees"></span>Données BRVM <code id="etat-donnees">…</code></i>
+      <span class="sep"></span>
+      <i><span class="pt ok"></span>Modèle <code id="etat-modele">…</code></i>
+    </div>
+  </main>
+</div>
+
+<!-- ============================ portefeuille ============================ -->
+<div id="voile" hidden></div>
+<aside id="panneau" role="dialog" aria-modal="true" aria-labelledby="titre-panneau" hidden>
+  <div class="panneau-tete">
+    <h2 id="titre-panneau">Mon portefeuille</h2>
+    <button class="rond" id="fermer-panneau" aria-label="Fermer le portefeuille" title="Fermer (Échap)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="alerte" id="alerte-marche" hidden></div>
+  <div class="tuiles">
+    <div class="tuile">
+      <div class="titre">Valeur totale</div>
+      <div class="valeur mono" id="t-total">—</div>
+      <div class="sous">titres + liquidités</div>
+    </div>
+    <div class="tuile">
+      <div class="titre">Plus-value latente</div>
+      <div class="valeur mono" id="t-pv">—</div>
+      <div class="sous mono" id="t-pv-pct"></div>
+    </div>
+    <div class="tuile">
+      <div class="titre">Liquidités</div>
+      <form id="form-liquidites">
+        <input id="liquidites" class="mono" type="number" min="0" step="1" aria-label="Liquidités en FCFA">
+        <button class="bouton">OK</button>
+      </form>
+      <div class="sous" id="t-liq-pct"></div>
+    </div>
+  </div>
+  <div class="tableau">
+    <table class="lignes">
+      <thead><tr>
+        <th>Titre</th><th>Qté</th><th>Prix de revient</th><th>Cours</th>
+        <th>Valeur</th><th>+/- value</th><th>Poids</th><th></th>
+      </tr></thead>
+      <tbody id="lignes"><tr><td colspan="8" class="vide">Chargement…</td></tr></tbody>
+    </table>
+  </div>
+  <form class="ajout" id="form-position">
+    <div><label for="p-ticker">Titre</label><input id="p-ticker" list="liste-tickers" placeholder="ex. SNTS" required autocomplete="off"></div>
+    <div><label for="p-qte">Quantité</label><input id="p-qte" class="mono" type="number" min="1" step="1" required></div>
+    <div><label for="p-prix">Prix de revient</label><input id="p-prix" class="mono" type="number" min="0" step="any" required></div>
+    <button class="bouton plein">Enregistrer</button>
+  </form>
+  <datalist id="liste-tickers"></datalist>
+  <div class="message" id="message-position" role="status"></div>
+</aside>
+
+<script>
+// ------------------------------------------------------------------ outils
+const $ = (id) => document.getElementById(id);
+const fcfa = (n) => n == null ? "—" : new Intl.NumberFormat("fr-FR", {maximumFractionDigits: 0}).format(n) + " F";
+const nombre = (n, d = 0) => n == null ? "—" : new Intl.NumberFormat("fr-FR", {maximumFractionDigits: d}).format(n);
+const signe = (n, texte) => n == null ? "—" : (n > 0 ? "+" : "") + texte;
+const classeSigne = (n) => n == null || n === 0 ? "" : (n > 0 ? "hausse" : "baisse");
+function ecrire(el, texte, type) { el.textContent = texte || ""; el.className = "message" + (type ? " " + type : ""); }
+const MARQUE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="13" width="4.4" height="8" rx="1.4" fill="currentColor" opacity=".32"/><rect x="9.8" y="8" width="4.4" height="13" rx="1.4" fill="currentColor" opacity=".62"/><rect x="16.6" y="3" width="4.4" height="18" rx="1.4" fill="currentColor"/></svg>';
+
+// thème, retenu par navigateur
+try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
+function basculerTheme() {
+  const sombre = document.documentElement.dataset.theme
+    ? document.documentElement.dataset.theme === "dark"
+    : matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.dataset.theme = sombre ? "light" : "dark";
+  try { localStorage.setItem("theme", document.documentElement.dataset.theme); } catch {}
+}
+$("theme").onclick = basculerTheme;
+$("theme-connexion").onclick = basculerTheme;
+
+// ------------------------------------------------------------------ Supabase
+let sb = null;
+
+async function jeton() {
+  const { data } = await sb.auth.getSession();
+  return data.session ? data.session.access_token : null;
+}
+
+async function api(chemin, options = {}) {
+  const t = await jeton();
+  const r = await fetch(chemin, {
+    ...options,
+    headers: { "Content-Type": "application/json", ...(t ? { Authorization: "Bearer " + t } : {}), ...(options.headers || {}) },
+  });
+  if (r.status === 401) { await sb.auth.signOut(); throw new Error("Session expirée, reconnecte-toi."); }
+  if (!r.ok) {
+    let detail = r.statusText;
+    try { const j = await r.json(); detail = typeof j.detail === "string" ? j.detail : "Données refusées."; } catch {}
+    throw new Error(detail);
+  }
+  return r;
+}
+
+// ------------------------------------------------------------------ connexion
+let mode = "connexion";
+document.querySelectorAll(".onglets button").forEach((b) => b.onclick = () => {
+  mode = b.dataset.mode;
+  document.querySelectorAll(".onglets button").forEach((x) => x.setAttribute("aria-selected", x === b));
+  $("bouton-connexion").textContent = mode === "connexion" ? "Se connecter" : "Créer mon compte";
+  $("mdp").autocomplete = mode === "connexion" ? "current-password" : "new-password";
+  ecrire($("message-connexion"), "");
+});
+
+$("form-connexion").onsubmit = async (e) => {
+  e.preventDefault();
+  const email = $("email").value.trim(), password = $("mdp").value, msg = $("message-connexion");
+  $("bouton-connexion").disabled = true;
+  ecrire(msg, mode === "connexion" ? "Connexion…" : "Création du compte…");
+  try {
+    if (mode === "connexion") {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+    } else {
+      const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: location.origin } });
+      if (error) throw error;
+      if (!data.session) ecrire(msg, "Compte créé. Clique sur le lien reçu par e-mail pour l'activer, puis connecte-toi.", "ok");
+    }
+  } catch (err) {
+    ecrire(msg, traduire(err.message), "erreur");
+  } finally {
+    $("bouton-connexion").disabled = false;
+  }
+};
+
+function traduire(m) {
+  if (/Invalid login credentials/i.test(m)) return "E-mail ou mot de passe incorrect.";
+  if (/Email not confirmed/i.test(m)) return "Confirme d'abord ton adresse avec le lien reçu par e-mail.";
+  if (/already registered/i.test(m)) return "Un compte existe déjà avec cette adresse.";
+  if (/rate limit/i.test(m)) return "Trop de tentatives, réessaie dans quelques minutes.";
+  return m;
+}
+
+$("deconnexion").onclick = () => sb.auth.signOut();
+
+function afficher(session) {
+  $("vue-connexion").hidden = !!session;
+  $("vue-app").hidden = !session;
+  if (session) {
+    const email = session.user.email || "";
+    const nom = email.split("@")[0];
+    $("avatar").textContent = (nom[0] || "?").toUpperCase();
+    $("profil-nom").textContent = nom;
+    $("profil-email").textContent = email;
+    chargerPortefeuille();
+    $("question").focus();
+  } else {
+    fermerPortefeuille(false);
+    nouvelleConversation();
+    $("resume").hidden = true;
+  }
+}
+
+// ------------------------------------------------------------------ rail (petit écran)
+function fermerRail() { document.body.classList.remove("rail-ouvert"); }
+$("ouvrir-rail").onclick = () => document.body.classList.add("rail-ouvert");
+$("voile-rail").onclick = fermerRail;
+
+// ------------------------------------------------------------------ panneau portefeuille
+let declencheur = null;
+function ouvrirPortefeuille(e) {
+  declencheur = e && e.currentTarget ? e.currentTarget : $("ouvrir-portefeuille");
+  fermerRail();
+  $("voile").hidden = false; $("panneau").hidden = false;
+  $("fermer-panneau").focus();
+  chargerPortefeuille();
+}
+function fermerPortefeuille(rendreFocus = true) {
+  if ($("panneau").hidden) return;
+  $("voile").hidden = true; $("panneau").hidden = true;
+  if (rendreFocus && declencheur && declencheur.offsetParent) declencheur.focus();
+}
+$("ouvrir-portefeuille").onclick = ouvrirPortefeuille;
+$("ouvrir-portefeuille-mobile").onclick = ouvrirPortefeuille;
+$("fermer-panneau").onclick = () => fermerPortefeuille();
+$("voile").onclick = () => fermerPortefeuille();
+
+document.addEventListener("keydown", (e) => {
+  if ($("vue-app").hidden) return;
+  if (e.key === "Escape") { fermerPortefeuille(); fermerRail(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === "1") { e.preventDefault(); ouvrirPortefeuille(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); fermerPortefeuille(false); $("question").focus(); }
+});
+
+// ------------------------------------------------------------------ portefeuille
+async function chargerPortefeuille() {
+  try {
+    const p = await (await api("/api/portefeuille")).json();
+    dessiner(p);
+  } catch (err) {
+    $("lignes").innerHTML = "";
+    const tr = document.createElement("tr"), td = document.createElement("td");
+    td.colSpan = 8; td.className = "vide"; td.textContent = err.message;
+    tr.appendChild(td); $("lignes").appendChild(tr);
+  }
+}
+
+function dessiner(p) {
+  // ligne d'état : les données de marché ont-elles répondu ?
+  $("pt-donnees").className = "pt " + (p.marche_indisponible ? "ko" : "ok");
+  $("etat-donnees").textContent = p.marche_indisponible ? "injoignables"
+    : p.date_seance ? "séance du " + new Date(p.date_seance + "T12:00:00").toLocaleDateString("fr-FR") : "—";
+
+  const alerte = $("alerte-marche");
+  if (p.marche_indisponible) {
+    alerte.hidden = false; alerte.textContent = "Données de marché injoignables pour l'instant : les cours ne sont pas affichés.";
+  } else if (p.sans_cours.length) {
+    alerte.hidden = false; alerte.textContent = "Sans cours aujourd'hui : " + p.sans_cours.join(", ") + ". Ces titres ne sont pas comptés dans le total.";
+  } else alerte.hidden = true;
+
+  // résumé dans le rail
+  $("resume").hidden = !(p.lignes.length || p.liquidites);
+  $("r-total").textContent = fcfa(p.total);
+  $("r-pv").textContent = p.plus_value_pct == null ? "—" : signe(p.plus_value_pct, nombre(p.plus_value_pct, 1) + " %");
+  $("r-pv").className = "mono " + classeSigne(p.plus_value);
+  $("r-liq").textContent = fcfa(p.liquidites);
+
+  // panneau
+  $("t-total").textContent = fcfa(p.total);
+  $("t-pv").textContent = signe(p.plus_value, fcfa(p.plus_value));
+  $("t-pv").className = "valeur mono " + classeSigne(p.plus_value);
+  $("t-pv-pct").textContent = p.plus_value_pct == null ? "" : signe(p.plus_value_pct, nombre(p.plus_value_pct, 2) + " %");
+  $("t-pv-pct").className = "sous mono " + classeSigne(p.plus_value_pct);
+  if (document.activeElement !== $("liquidites")) $("liquidites").value = Math.round(p.liquidites);
+  $("t-liq-pct").textContent = p.poids_liquidites_pct == null ? "" : nombre(p.poids_liquidites_pct, 1) + " % du total";
+
+  const corps = $("lignes"); corps.innerHTML = "";
+  if (!p.lignes.length) {
+    corps.innerHTML = '<tr><td colspan="8" class="vide">Aucun titre. Ajoute ta première ligne ci-dessous.</td></tr>';
+    return;
+  }
+  for (const l of p.lignes) {
+    const tr = document.createElement("tr");
+    const cellules = [
+      [l.ticker, "titre"],
+      [nombre(l.quantite), "mono"],
+      [fcfa(l.prix_achat), "mono"],
+      [fcfa(l.cours), "mono"],
+      [fcfa(l.valeur), "mono"],
+      [l.plus_value == null ? "—" : signe(l.plus_value, fcfa(l.plus_value)) + " (" + signe(l.plus_value_pct, nombre(l.plus_value_pct, 1)) + " %)", "mono " + classeSigne(l.plus_value)],
+      [l.poids_pct == null ? "—" : nombre(l.poids_pct, 1) + " %", "mono"],
+    ];
+    for (const [texte, classe] of cellules) {
+      const td = document.createElement("td"); td.textContent = texte; td.className = classe; tr.appendChild(td);
+    }
+    const td = document.createElement("td"), b = document.createElement("button");
+    b.className = "lien"; b.textContent = "✕"; b.title = "Retirer " + l.ticker; b.setAttribute("aria-label", "Retirer " + l.ticker);
+    b.onclick = async () => {
+      if (!confirm("Retirer " + l.ticker + " du portefeuille ?")) return;
+      try { await api("/api/positions/" + l.id, { method: "DELETE" }); chargerPortefeuille(); }
+      catch (err) { ecrire($("message-position"), err.message, "erreur"); }
+    };
+    // Double-clic sur une ligne : elle passe dans le formulaire pour etre modifiee.
+    tr.ondblclick = () => { $("p-ticker").value = l.ticker; $("p-qte").value = l.quantite; $("p-prix").value = l.prix_achat; $("p-qte").focus(); };
+    td.appendChild(b); tr.appendChild(td); corps.appendChild(tr);
+  }
+}
+
+$("form-position").onsubmit = async (e) => {
+  e.preventDefault();
+  const msg = $("message-position");
+  const corps = { ticker: $("p-ticker").value.trim().toUpperCase(), quantite: +$("p-qte").value, prix_achat: +$("p-prix").value };
+  ecrire(msg, "Vérification du titre…");
+  try {
+    await api("/api/positions", { method: "PUT", body: JSON.stringify(corps) });
+    ecrire(msg, corps.ticker + " enregistré. Double-clic sur une ligne pour la modifier.", "ok");
+    e.target.reset(); chargerPortefeuille();
+  } catch (err) { ecrire(msg, err.message, "erreur"); }
+};
+
+$("form-liquidites").onsubmit = async (e) => {
+  e.preventDefault();
+  try {
+    await api("/api/liquidites", { method: "PUT", body: JSON.stringify({ montant: +$("liquidites").value || 0 }) });
+    $("liquidites").blur(); chargerPortefeuille();
+  } catch (err) { ecrire($("message-position"), err.message, "erreur"); }
+};
+
+async function chargerTickers() {
+  try {
+    const t = await (await fetch("/api/tickers")).json();
+    const liste = $("liste-tickers");
+    for (const x of t.stocks) { const o = document.createElement("option"); o.value = x; liste.appendChild(o); }
+  } catch {}
+}
+
+// ------------------------------------------------------------------ conversation
+let historique = [];
+let enCours = false;
+
+function defilerEnBas() { $("fil").scrollTop = $("fil").scrollHeight; }
+
+// Au premier message, la zone de saisie quitte l'accueil et se fixe en bas.
+function modeConversation(actif) {
+  $("accueil").hidden = actif;
+  (actif ? $("zone-bas") : $("place-zone")).appendChild($("zone"));
+}
+
+function nouvelleConversation() {
+  historique = [];
+  document.querySelectorAll("#fil .tour").forEach((t) => t.remove());
+  $("conv-courante").hidden = true;
+  $("nouvelle").classList.add("actif");
+  $("conv-courante").classList.remove("actif");
+  modeConversation(false);
+  fermerRail();
+  $("question").value = ""; ajusterSaisie();
+  if (!$("vue-app").hidden) $("question").focus();
+}
+$("nouvelle").onclick = () => { if (!enCours) nouvelleConversation(); };
+
+function tour(classe) {
+  const t = document.createElement("div");
+  t.className = "colonne tour " + classe;
+  $("fil").appendChild(t);
+  return t;
+}
+
+function libelleOutil(nom, args) {
+  const detail = !args ? "" : args.ticker || Object.entries(args).map(([k, v]) => k + "=" + v).join(" ");
+  const o = document.createElement("span"); o.className = "outil";
+  const s = document.createElement("span"); s.className = "spin";
+  const b = document.createElement("b"); b.textContent = nom;
+  o.append(s, b);
+  if (detail) { const d = document.createElement("span"); d.textContent = detail; o.appendChild(d); }
+  return o;
+}
+
+async function poser(question) {
+  if (enCours) return;
+  enCours = true; $("envoyer").disabled = true;
+  if ($("conv-courante").hidden) {
+    $("conv-titre").textContent = question;
+    $("conv-courante").hidden = false; $("conv-courante").classList.add("actif");
+    $("nouvelle").classList.remove("actif");
+  }
+  modeConversation(true);
+
+  const moi = tour("moi"); const b = document.createElement("div"); b.className = "bulle"; b.textContent = question; moi.appendChild(b);
+  const lui = tour("lui");
+  lui.innerHTML = '<div class="qui">' + MARQUE + '<b>Assistant</b></div>';
+  const outils = document.createElement("div"); outils.className = "outils";
+  const attente = document.createElement("div"); attente.className = "attente"; attente.textContent = "Analyse en cours";
+  lui.append(outils, attente);
+  defilerEnBas();
+
+  const finirOutils = () => outils.querySelectorAll(".outil").forEach((o) => o.classList.add("fini"));
+  let reponse = null;
+  try {
+    const r = await api("/api/chat", { method: "POST", body: JSON.stringify({ question, historique: historique.slice(-10) }) });
+    const lecteur = r.body.getReader(), decodeur = new TextDecoder();
+    let tampon = "";
+    for (;;) {
+      const { value, done } = await lecteur.read();
+      if (done) break;
+      tampon += decodeur.decode(value, { stream: true });
+      let fin;
+      while ((fin = tampon.indexOf("\n")) >= 0) {
+        const ligne = tampon.slice(0, fin).trim(); tampon = tampon.slice(fin + 1);
+        if (!ligne) continue;
+        const ev = JSON.parse(ligne);
+        if (ev.type === "outil") {
+          outils.appendChild(libelleOutil(ev.nom, ev.arguments));
+          attente.textContent = "Analyse en cours";
+        } else if (ev.type === "attente") {
+          attente.textContent = ev.raison === "bascule"
+            ? "Modèle saturé : je repars avec " + ev.modele
+            : (ev.raison === "surcharge" ? "Modèle surchargé" : "Quota du modèle atteint") + " : nouvelle tentative dans " + ev.secondes + " s";
+        } else if (ev.type === "reponse") {
+          reponse = ev.texte || "(réponse vide)";
+          finirOutils(); attente.remove();
+          const md = document.createElement("div"); md.className = "md";
+          md.innerHTML = DOMPurify.sanitize(marked.parse(reponse));
+          lui.appendChild(md);
+        } else if (ev.type === "erreur") {
+          attente.remove();
+          const m = document.createElement("div"); m.className = "alerte-msg"; m.textContent = ev.message; lui.appendChild(m);
+        }
+        defilerEnBas();
+      }
+    }
+  } catch (err) {
+    attente.remove();
+    const m = document.createElement("div"); m.className = "alerte-msg"; m.textContent = err.message; lui.appendChild(m);
+  } finally {
+    if (!outils.children.length) outils.remove();
+    if (attente.isConnected) attente.remove();
+    enCours = false; ajusterSaisie();
+    defilerEnBas();
+  }
+  if (reponse) historique.push({ role: "user", content: question }, { role: "assistant", content: reponse.slice(0, 8000) });
+}
+
+// zone de saisie : hauteur qui suit le texte, bouton actif seulement s'il y a du texte
+function ajusterSaisie() {
+  const q = $("question");
+  q.style.height = "auto";
+  q.style.height = Math.min(q.scrollHeight, 190) + "px";
+  $("envoyer").disabled = enCours || !q.value.trim();
+}
+$("question").oninput = ajusterSaisie;
+$("zone").onsubmit = (e) => {
+  e.preventDefault();
+  const q = $("question").value.trim();
+  if (!q || enCours) return;
+  $("question").value = ""; ajusterSaisie();
+  poser(q);
+};
+$("question").onkeydown = (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("zone").requestSubmit(); }
+};
+document.querySelectorAll("#suggestions .puce").forEach((b) => b.onclick = () => poser(b.dataset.question));
+
+// ------------------------------------------------------------------ démarrage
+(async () => {
+  const c = await (await fetch("/api/config")).json();
+  $("modele-nom").textContent = c.modeles[0];
+  $("etat-modele").textContent = c.modeles[0] + (c.modeles.length > 1 ? " +" + (c.modeles.length - 1) + " secours" : "");
+  sb = supabase.createClient(c.supabase_url, c.supabase_key);
+  const { data } = await sb.auth.getSession();
+  afficher(data.session);
+  sb.auth.onAuthStateChange((evenement, session) => {
+    if (evenement === "SIGNED_IN" || evenement === "SIGNED_OUT") afficher(session);
+  });
+  chargerTickers();
+})();
+</script>
+</body>
+</html>
