@@ -1,12 +1,27 @@
 import asyncio
 import csv
 import io
+import os
+import sys
 from typing import Optional
 
 import httpx
 from mcp.server.fastmcp import FastMCP
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
-mcp = FastMCP("BRVM")
+# Reglages du mode HTTP (ignores en stdio).
+# host et port passent par le constructeur : FastMCP decide de la protection
+# DNS-rebinding a la construction. Construit sur 127.0.0.1, il refuserait
+# ensuite les requetes adressees a onrender.com.
+# stateless_http : Render endort le service gratuit apres 15 min d'inactivite,
+# une session gardee en memoire serait perdue au reveil.
+mcp = FastMCP(
+    "BRVM",
+    host="0.0.0.0",
+    port=int(os.environ.get("PORT", 8000)),
+    stateless_http=True,
+)
 
 # Source des donnees. Le depot Fredysessie/brvm-data-public a ete supprime en
 # septembre 2026 : les CSV sont desormais produits et heberges par nous.
@@ -262,13 +277,22 @@ async def get_market_overview() -> dict:
     }
 
 
-def main():
-    """Point d'entree : serveur MCP local, transport stdio.
+@mcp.custom_route("/health", methods=["GET"])
+async def health(request: Request) -> JSONResponse:
+    """Sonde de Render. Ne lit pas les donnees : repond meme si GitHub est lent."""
+    return JSONResponse({"status": "ok"})
 
-    Lance par Claude Code via ~/.claude.json :
-        python c:/Users/Yanick/Desktop/BRVM/brvm-mcp/server.py
+
+def main():
+    """Point d'entree.
+
+    python server.py         stdio, lance par Claude Code via ~/.claude.json
+    python server.py --http  Streamable HTTP sur 0.0.0.0:$PORT/mcp (Render)
     """
-    mcp.run()
+    if "--http" in sys.argv:
+        mcp.run(transport="streamable-http")
+    else:
+        mcp.run()
 
 
 if __name__ == "__main__":
