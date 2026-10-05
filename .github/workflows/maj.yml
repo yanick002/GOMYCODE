@@ -2,7 +2,11 @@ name: Mise a jour des donnees BRVM
 
 on:
   schedule:
-    # 16h30 UTC, du lundi au vendredi. La BRVM ferme a 15h00 UTC.
+    # Cours et indicateurs toutes les 15 minutes pendant la seance, du lundi au vendredi : de 9h00 a 15h45 UTC
+    # (la BRVM ferme a 15h00 UTC). GitHub peut retarder un passage de quelques minutes aux heures chargees.
+    - cron: "*/15 9-15 * * 1-5"
+    # 16h30 UTC : le releve complet de fin de journee, une fois la seance publiee ; seul passage qui relit aussi le
+    # nombre de titres et controle le RSI.
     - cron: "30 16 * * 1-5"
   workflow_dispatch:        # bouton "Run workflow" pour lancer a la main
 
@@ -36,6 +40,9 @@ jobs:
       # bibliotheque standard. Rien a installer.
 
       - name: Relever le nombre de titres
+        # Une fois par jour (passage de 16h30) : le nombre de titres ne bouge pas de quart d'heure en quart d'heure,
+        # et chaque passage coute 49 requetes a richbourse.
+        if: github.event_name != 'schedule' || github.event.schedule == '30 16 * * 1-5'
         # Sert a la valorisation et au capital echange. Releve chaque jour
         # plutot que fige : c'est ce qui rattrapera automatiquement le
         # fractionnement Sonatel du 26 octobre 2026 (1 pour 10). En cas
@@ -54,6 +61,8 @@ jobs:
         run: python scraper/indicateurs.py
 
       - name: Controler le RSI contre la reference
+        # Une fois par jour, comme le nombre de titres.
+        if: github.event_name != 'schedule' || github.event.schedule == '30 16 * * 1-5'
         # Compare notre calcul a celui affiche par richbourse sur un
         # echantillon. Ne fait pas echouer le job : c'est un signal, pas une
         # dependance. Une divergence apparait en rouge dans le journal.
@@ -68,6 +77,9 @@ jobs:
           if git diff --staged --quiet; then
             echo "Aucun changement, rien a commiter."
           else
-            git commit -m "Donnees du $(date -u +%Y-%m-%d)"
+            git commit -m "Donnees du $(date -u '+%Y-%m-%d %H:%M') UTC"
+            # Un passage toutes les 15 minutes croise plus souvent un autre push (le notre, depuis le PC) : on
+            # reprend ce qui est arrive entre-temps avant de pousser.
+            git pull --rebase
             git push
           fi
