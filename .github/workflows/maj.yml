@@ -2,11 +2,15 @@ name: Mise a jour des donnees BRVM
 
 on:
   schedule:
-    # Cours et indicateurs toutes les 15 minutes pendant la seance, du lundi au vendredi : de 9h00 a 15h45 UTC
-    # (la BRVM ferme a 15h00 UTC). GitHub peut retarder un passage de quelques minutes aux heures chargees.
+    # Passage LEGER toutes les 15 minutes, du lundi au vendredi, de 9h00 a 16h15 UTC : trois requetes de controle, et la
+    # collecte complete seulement si la source a du nouveau. La BRVM ferme a 15h00 UTC et richbourse ne publie les cours du
+    # jour qu'apres la cloture : c'est dans ces passages-la que les nouveaux cours arrivent, au plus 15 minutes apres.
+    # (Une collecte complete, 67 requetes, toutes les 15 minutes : la source a fini par refuser nos appels le 6 octobre.)
+    # GitHub peut retarder un passage de quelques minutes aux heures chargees.
     - cron: "*/15 9-15 * * 1-5"
-    # 16h30 UTC : le releve complet de fin de journee, une fois la seance publiee ; seul passage qui relit aussi le
-    # nombre de titres et controle le RSI.
+    - cron: "0,15 16 * * 1-5"
+    # 16h30 UTC : le releve complet de fin de journee, comme avant. Strict : s'il echoue, GitHub previent par e-mail. Seul
+    # passage qui relit aussi le nombre de titres et controle le RSI.
     - cron: "30 16 * * 1-5"
   workflow_dispatch:        # bouton "Run workflow" pour lancer a la main
 
@@ -51,18 +55,23 @@ jobs:
         run: python scraper/faire_actions.py
 
       - name: Collecter les cours
+        id: collecte
         # 49 actions + 18 indices. Echoue si plus de la moitie des tickers
         # tombent, ou si aucune seance fraiche depuis 3 jours ouvres.
-        run: python scraper/collecte.py
+        # Passage leger (toutes les 15 min) : une panne passagere de la source n'est pas une alerte, le passage suivant
+        # reessaiera ; les etapes suivantes sautent alors. Le releve de 16h30 et le lancement a la main restent stricts.
+        continue-on-error: ${{ github.event_name == 'schedule' && github.event.schedule != '30 16 * * 1-5' }}
+        run: python scraper/collecte.py ${{ (github.event_name == 'schedule' && github.event.schedule != '30 16 * * 1-5') && '--leger' || '' }}
 
       - name: Calculer les indicateurs
+        if: steps.collecte.outcome == 'success'
         # RSI de Wilder, Beta contre le BRVM Composite, variations par
         # fenetre. Le serveur MCP ne calcule rien : il lit ces fichiers.
         run: python scraper/indicateurs.py
 
       - name: Controler le RSI contre la reference
         # Une fois par jour, comme le nombre de titres.
-        if: github.event_name != 'schedule' || github.event.schedule == '30 16 * * 1-5'
+        if: steps.collecte.outcome == 'success' && (github.event_name != 'schedule' || github.event.schedule == '30 16 * * 1-5')
         # Compare notre calcul a celui affiche par richbourse sur un
         # echantillon. Ne fait pas echouer le job : c'est un signal, pas une
         # dependance. Une divergence apparait en rouge dans le journal.
@@ -70,6 +79,7 @@ jobs:
         run: python scraper/controle_rsi.py
 
       - name: Commiter les donnees
+        if: steps.collecte.outcome == 'success'
         run: |
           git config user.name "brvm-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

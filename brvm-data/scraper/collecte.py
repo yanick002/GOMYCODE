@@ -18,6 +18,8 @@ Aucune dependance externe : uniquement la bibliotheque standard.
 Usage :
     python collecte.py              actions + indices
     python collecte.py NSBC BRVMC   seulement ceux-la
+    python collecte.py --leger      passage leger : trois requetes de controle, la collecte complete
+                                    seulement si la source a du nouveau (workflow, toutes les 15 min)
 """
 import csv, datetime, io, json, os, sys, time, urllib.error, urllib.request
 
@@ -38,6 +40,9 @@ ENTETES = {
 PAUSE = 0.6          # secondes entre deux tickers
 ESSAIS = 3           # tentatives par ticker
 MIN_SEANCES = 2      # en dessous, on considere la reponse suspecte
+ECHECS_DE_SUITE = 8  # apres autant d'echecs d'affilee, la source refuse nos appels : on n'insiste pas
+# Passage leger : les titres les plus echanges. Si la source a du nouveau, ils le montrent les premiers.
+SONDES = ["SNTS", "ORAC", "SGBC"]
 
 COLONNES = ["Date", "Open", "High", "Low", "Close", "Volume"]
 
@@ -220,6 +225,46 @@ def traiter(ticker, alias=None):
 
 # -------------------------------------------------------------------- main
 
+def ligne_csv(seance):
+    """Une seance telle que ecrire() l'ecrit dans le CSV (pour la comparer a celle qu'on a deja)."""
+    jour, o, h, b, c, v = seance
+    return ",".join([jour.isoformat(), nombre(o), nombre(h), nombre(b), nombre(c), nombre(v)])
+
+
+def derniere_seance_locale(ticker):
+    """La derniere ligne de data/{T}/{T}.daily.csv, ou None s'il n'y en a pas."""
+    chemin = os.path.join(DOSSIER_DATA, ticker, "%s.daily.csv" % ticker)
+    try:
+        with open(chemin, encoding="utf-8") as f:
+            lignes = [l.rstrip("\n") for l in f if l.strip()]
+    except OSError:
+        return None
+    return lignes[-1] if len(lignes) > 1 else None
+
+
+def sonder():
+    """Passage leger : une requete par sonde, sa derniere seance comparee a celle qu'on a deja.
+    Retourne (sondes ou la source a du nouveau, sondes en erreur)."""
+    nouveau, erreurs = [], []
+    for i, t in enumerate(SONDES):
+        try:
+            lignes = recuperer(t)
+            if len(lignes) < MIN_SEANCES:
+                raise ValueError("seulement %d seance(s)" % len(lignes))
+        except Exception as e:
+            erreurs.append((t, str(e)[:160]))
+            print("  sonde %-5s ECHEC : %s" % (t, str(e)[:160]))
+            continue
+        recue = ligne_csv(lignes[-1])
+        change = recue != derniere_seance_locale(t)
+        print("  sonde %-5s %s : %s" % (t, "NOUVEAU" if change else "identique", recue))
+        if change:
+            nouveau.append(t)
+        if i < len(SONDES) - 1:
+            time.sleep(PAUSE)
+    return nouveau, erreurs
+
+
 def diagnostic():
     """Avant de lancer 49 requetes, dire d'ou l'on appelle et si la source
     accepte l'appel. Sans cela, un blocage d'adresse IP ressemble a une panne
@@ -259,14 +304,16 @@ def diagnostic():
 
 
 def main():
+    leger = "--leger" in sys.argv[1:]
+    arguments = [a for a in sys.argv[1:] if a != "--leger"]
     actions = json.load(open(TICKERS, encoding="utf-8"))["actions"]
     indices = json.load(open(INDICES, encoding="utf-8"))["indices"]
 
     # Chaque entree est un couple (ticker, alias) ; alias None pour une action.
     lot = ([(t, None) for t in sorted(actions)]
            + [(t, indices[t]) for t in sorted(indices)])
-    if sys.argv[1:]:
-        voulus = {t.upper() for t in sys.argv[1:]}
+    if arguments:
+        voulus = {t.upper() for t in arguments}
         lot = [x for x in lot if x[0].upper() in voulus]
         inconnus = voulus - {x[0].upper() for x in lot}
         if inconnus:
@@ -274,16 +321,32 @@ def main():
     demandes = lot
 
     os.makedirs(DOSSIER_DATA, exist_ok=True)
-    diagnostic()
+    if leger:
+        # Une collecte complete, c'est 67 requetes qui rechargent tout l'historique : toutes les 15 minutes, la source finit par
+        # refuser nos appels. On regarde d'abord, en trois requetes, s'il y a du nouveau.
+        print("Passage leger : %d sondes\n" % len(SONDES))
+        nouveau, erreurs = sonder()
+        if len(erreurs) == len(SONDES):
+            print("\nLa source ne repond a aucune sonde : on reessaiera au prochain passage.")
+            diagnostic()
+            sys.exit(1)
+        if not nouveau:
+            print("\nRien de nouveau : on ne collecte pas.")
+            return
+        print("\nDu nouveau (%s) : collecte complete.\n" % ", ".join(nouveau))
+    else:
+        diagnostic()
     print("Collecte de %d ticker(s)\n" % len(demandes))
 
     ok, echecs, dates = 0, [], []
+    de_suite = 0
     for i, (t, alias) in enumerate(demandes, 1):
         reussi, message, derniere = traiter(t, alias)
         etat = "OK  " if reussi else "ECHEC"
         print("  [%2d/%2d] %-8s %s %s" % (i, len(demandes), t, etat, message))
         if reussi:
             ok += 1
+            de_suite = 0
             # Seules les actions comptent pour le controle de fraicheur : les
             # sept indices d'avant la reforme sont geles au 31/12/2025, ils
             # feraient echouer le job tous les jours.
@@ -291,6 +354,10 @@ def main():
                 dates.append(derniere)
         else:
             echecs.append((t, message))
+            de_suite += 1
+            if de_suite >= ECHECS_DE_SUITE:
+                print("\nARRET : %d echecs d'affilee, la source refuse probablement nos appels. On n'insiste pas." % de_suite)
+                break
         if i < len(demandes):
             time.sleep(PAUSE)
 
