@@ -2,15 +2,14 @@ name: Mise a jour des donnees BRVM
 
 on:
   schedule:
-    # Passage LEGER toutes les 15 minutes, du lundi au vendredi, de 9h00 a 16h15 UTC : trois requetes de controle, et la
-    # collecte complete seulement si la source a du nouveau. La BRVM ferme a 15h00 UTC et richbourse ne publie les cours du
-    # jour qu'apres la cloture : c'est dans ces passages-la que les nouveaux cours arrivent, au plus 15 minutes apres.
-    # (Une collecte complete, 67 requetes, toutes les 15 minutes : la source a fini par refuser nos appels le 6 octobre.)
+    # Trois releves par jour, du lundi au vendredi (heures UTC = heures d'Abidjan). La BRVM ferme a 15h00 et la source ne
+    # publie qu'une ligne par seance (ouverture, haut, bas, cloture, volume), apres la cloture, a une heure qui varie.
+    # 15h05 et 15h30 : passages LEGERS, trois requetes de controle, et la collecte complete seulement si la seance du jour
+    # est publiee. 16h30 : releve complet de rattrapage si la source a publie tard. Un commit n'est cree que s'il y a
+    # du nouveau : en principe un seul par jour.
     # GitHub peut retarder un passage de quelques minutes aux heures chargees.
-    - cron: "*/15 9-15 * * 1-5"
-    - cron: "0,15 16 * * 1-5"
-    # 16h30 UTC : le releve complet de fin de journee, comme avant. Strict : s'il echoue, GitHub previent par e-mail. Seul
-    # passage qui relit aussi le nombre de titres et controle le RSI.
+    - cron: "5 15 * * 1-5"
+    - cron: "30 15 * * 1-5"
     - cron: "30 16 * * 1-5"
   workflow_dispatch:        # bouton "Run workflow" pour lancer a la main
 
@@ -44,8 +43,7 @@ jobs:
       # bibliotheque standard. Rien a installer.
 
       - name: Relever le nombre de titres
-        # Une fois par jour (passage de 16h30) : le nombre de titres ne bouge pas de quart d'heure en quart d'heure,
-        # et chaque passage coute 49 requetes a richbourse.
+        # Une fois par jour (releve de 16h30) : chaque passage coute 49 requetes a richbourse.
         if: github.event_name != 'schedule' || github.event.schedule == '30 16 * * 1-5'
         # Sert a la valorisation et au capital echange. Releve chaque jour
         # plutot que fige : c'est ce qui rattrapera automatiquement le
@@ -58,8 +56,9 @@ jobs:
         id: collecte
         # 49 actions + 18 indices. Echoue si plus de la moitie des tickers
         # tombent, ou si aucune seance fraiche depuis 3 jours ouvres.
-        # Passage leger (toutes les 15 min) : une panne passagere de la source n'est pas une alerte, le passage suivant
-        # reessaiera ; les etapes suivantes sautent alors. Le releve de 16h30 et le lancement a la main restent stricts.
+        # Passages legers (15h05, 15h30) : une panne passagere de la source n'est pas une alerte, le releve suivant
+        # reessaiera ; les etapes suivantes sautent alors. Le releve de 16h30 et le lancement a la main restent stricts :
+        # s'ils echouent, GitHub previent par e-mail.
         continue-on-error: ${{ github.event_name == 'schedule' && github.event.schedule != '30 16 * * 1-5' }}
         run: python scraper/collecte.py ${{ (github.event_name == 'schedule' && github.event.schedule != '30 16 * * 1-5') && '--leger' || '' }}
 
@@ -87,9 +86,8 @@ jobs:
           if git diff --staged --quiet; then
             echo "Aucun changement, rien a commiter."
           else
-            git commit -m "Donnees du $(date -u '+%Y-%m-%d %H:%M') UTC"
-            # Un passage toutes les 15 minutes croise plus souvent un autre push (le notre, depuis le PC) : on
-            # reprend ce qui est arrive entre-temps avant de pousser.
+            git commit -m "Donnees du $(date -u '+%Y-%m-%d') UTC"
+            # Un push arrive entre-temps (depuis le PC) : on le reprend avant de pousser.
             git pull --rebase
             git push
           fi
