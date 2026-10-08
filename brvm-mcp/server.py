@@ -1,8 +1,12 @@
 import asyncio
 import csv
+import html
 import io
+import logging
 import os
+import re
 import sys
+from datetime import datetime, time as dtime, timezone
 from typing import Optional
 
 import httpx
@@ -45,6 +49,124 @@ INDEX_TICKERS = [
 ]
 
 ALL_TICKERS = STOCK_TICKERS + INDEX_TICKERS
+
+# Cours en seance. Les CSV ne contiennent que les clotures (une ligne par seance, publiee apres 15h00) : pendant la
+# seance, le dernier cours de chaque action est lu sur la page « toutes les actions » de Sika Finance (une requete
+# pour les 48 titres) et garde 15 minutes en memoire. Quel que soit le nombre d'appels, Sika recoit donc au plus une
+# requete par quart d'heure. Hors seance, et si Sika ne repond pas, tout reste sur la derniere cloture.
+# L'historique et les indicateurs (RSI, Beta, variations sur 1 mois, 1 an...) restent calcules sur les clotures.
+SIKA_URL = "https://www.sikafinance.com/marches/aaz"
+MEMOIRE_DIRECT = 15 * 60          # secondes
+REESSAI_DIRECT = 2 * 60           # apres un echec, on ne redemande pas avant 2 minutes
+_direct = {"releve": None, "titres": {}, "echec": None}
+_verrou_direct = asyncio.Lock()
+journal = logging.getLogger("brvm.direct")
+
+
+def seance_ouverte(maintenant: Optional[datetime] = None) -> bool:
+    """Du lundi au vendredi, de 9h00 a 15h00 UTC (heure d'Abidjan) : les heures de la BRVM."""
+    m = maintenant or datetime.now(timezone.utc)
+    return m.weekday() < 5 and dtime(9, 0) <= m.time() < dtime(15, 0)
+
+
+def _texte(cellule: str) -> str:
+    return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", cellule))).replace("\xa0", " ").strip()
+
+
+def _montant(texte: str) -> Optional[float]:
+    """« 26 581 555 », « 3 055 », « -2.78% » -> nombre ; None si vide ou illisible."""
+    t = texte.replace("%", "").replace(" ", "").replace(",", ".").strip()
+    try:
+        return float(t)
+    except ValueError:
+        return None
+
+
+def lire_page_sika(page: str) -> dict:
+    """{ticker: {ouverture, plus_haut, plus_bas, volume_titres, volume_xof, dernier, variation}} depuis la page Sika.
+
+    Le tableau voulu est celui dont l'en-tete annonce « Volume (titres) » ; le symbole vient du lien de chaque ligne
+    (/marches/cotation_SNTS.sn). Colonnes : Nom, Ouverture, +Haut, +Bas, Volume (titres), Volume (XOF), Dernier, Variation.
+    """
+    for tableau in re.findall(r"<table.*?</table>", page, re.S):
+        entetes = [_texte(x) for x in re.findall(r"<th[^>]*>(.*?)</th>", tableau, re.S)]
+        if "Volume (titres)" not in entetes or "Dernier" not in entetes:
+            continue
+        titres = {}
+        for ligne in re.findall(r"<tr[^>]*>(.*?)</tr>", tableau, re.S):
+            code = re.search(r"cotation_([A-Z0-9]+)\.", ligne)
+            cellules = [_texte(c) for c in re.findall(r"<td[^>]*>(.*?)</td>", ligne, re.S)]
+            if not code or len(cellules) < 8:
+                continue
+            ouverture, haut, bas, vol_titres, vol_xof, dernier, variation = (_montant(c) for c in cellules[1:8])
+            if dernier is None or dernier <= 0:
+                continue
+            titres[code.group(1)] = {"ouverture": ouverture, "plus_haut": haut, "plus_bas": bas,
+                                     "volume_titres": vol_titres, "volume_xof": vol_xof,
+                                     "dernier": dernier, "variation": variation}
+        return titres
+    return {}
+
+
+async def cours_direct() -> Optional[dict]:
+    """{"releve": heure du releve (UTC, ISO), "titres": {...}} pendant la seance ; None hors seance ou si Sika ne
+    repond pas (on garde alors la cloture)."""
+    if not seance_ouverte():
+        return None
+    async with _verrou_direct:
+        maintenant = datetime.now(timezone.utc)
+        releve, echec = _direct["releve"], _direct["echec"]
+        frais = releve is not None and releve.date() == maintenant.date() and (maintenant - releve).total_seconds() < MEMOIRE_DIRECT
+        recent_echec = echec is not None and (maintenant - echec).total_seconds() < REESSAI_DIRECT
+        if not frais and not recent_echec:
+            try:
+                async with httpx.AsyncClient(headers={"User-Agent": "Mozilla/5.0 (Mansa)", "Accept-Language": "fr"},
+                                             follow_redirects=True) as client:
+                    r = await client.get(SIKA_URL, timeout=20)
+                    r.raise_for_status()
+                titres = lire_page_sika(r.text)
+                # moins de la moitie des actions lues : la page a change, on ne s'y fie pas
+                if len(titres) < len(STOCK_TICKERS) / 2:
+                    raise ValueError("%d titre(s) lu(s) sur la page Sika" % len(titres))
+                _direct.update(releve=maintenant, titres=titres, echec=None)
+            except Exception as e:
+                journal.warning("Sika Finance : cours en seance indisponibles (%s), on garde la cloture", e)
+                _direct["echec"] = maintenant
+        releve = _direct["releve"]
+        if releve is None or releve.date() != maintenant.date():
+            return None             # rien de releve aujourd'hui : on reste sur la cloture
+        return {"releve": releve.strftime("%Y-%m-%dT%H:%M:%SZ"), "titres": _direct["titres"]}
+
+
+def _variation_texte(v: float) -> str:
+    """1.33 -> « +1,33% », comme dans les CSV."""
+    return ("%+.2f%%" % v).replace(".", ",")
+
+
+def avec_direct(ligne: dict, direct: Optional[dict]) -> dict:
+    """Une ligne d'indicateurs (CSV) dont le cours du jour est remplace par le cours en seance, s'il y en a un.
+
+    Cours_Source vaut « seance » ou « cloture » ; Cours_Releve donne l'heure du releve Sika (UTC). La cloture de la
+    veille devient la derniere cloture connue, puisque la seance du jour n'est pas encore dans les CSV.
+    """
+    ligne = dict(ligne)
+    d = (direct or {}).get("titres", {}).get(ligne.get("Ticker"))
+    if not d:
+        ligne.update(Cours_Source="cloture", Cours_Releve="")
+        return ligne
+    ligne.update(
+        Cloture_Veille=ligne.get("Cours_Actuel"),
+        Cours_Actuel=d["dernier"],
+        Variation_Cours=_variation_texte(d["variation"]) if d["variation"] is not None else ligne.get("Variation_Cours"),
+        Ouverture=d["ouverture"] if d["ouverture"] is not None else "",
+        Plus_Haut=d["plus_haut"] if d["plus_haut"] is not None else "",
+        Plus_Bas=d["plus_bas"] if d["plus_bas"] is not None else "",
+        Volume_Titres=d["volume_titres"] if d["volume_titres"] is not None else "",
+        Volume_XOF=d["volume_xof"] if d["volume_xof"] is not None else "",
+        Cours_Source="seance",
+        Cours_Releve=direct["releve"],
+    )
+    return ligne
 
 
 def _parse_float(val) -> float:
@@ -104,15 +226,24 @@ async def get_indicators(ticker: str) -> dict:
     Récupère les indicateurs techniques actuels d'un ticker :
     RSI, Beta, cours actuel, variation du jour, volumes, plages de prix
     sur 1 semaine / 1 mois / YTD / 1 an / 3 ans / 5 ans.
+    Pendant la séance (lundi-vendredi, 9h00-15h00 UTC), Cours_Actuel, Variation_Cours, Ouverture, Plus_Haut,
+    Plus_Bas et les volumes sont ceux de la séance en cours (Cours_Source = "seance", heure du relevé dans
+    Cours_Releve, rafraîchi toutes les 15 minutes) ; sinon ceux de la dernière clôture (Cours_Source = "cloture").
+    RSI, Beta et variations sur plusieurs jours restent calculés sur les clôtures.
 
     Args:
         ticker: Symbole boursier (ex: SGBC, ONTBF)
     """
     url = f"{BASE_URL}/{ticker}/{ticker}.indicator.csv"
-    async with httpx.AsyncClient() as client:
-        r = await client.get(url, timeout=15)
-        r.raise_for_status()
-    return dict(next(csv.DictReader(io.StringIO(r.text))))
+
+    async def lire_csv():
+        async with httpx.AsyncClient() as client:
+            r = await client.get(url, timeout=15)
+            r.raise_for_status()
+        return dict(next(csv.DictReader(io.StringIO(r.text))))
+
+    ligne, direct = await asyncio.gather(lire_csv(), cours_direct())
+    return avec_direct(ligne, direct)
 
 
 @mcp.tool()
@@ -137,6 +268,9 @@ async def screen_market(
         variation_1y_min: Variation 1 an minimum
         variation_1y_max: Variation 1 an maximum
         stocks_only: Si True, exclut les indices (défaut True)
+
+    Pendant la séance (lundi-vendredi, 9h00-15h00 UTC), cours, variation du jour, plus haut et plus bas sont ceux
+    de la séance en cours (source_cours = "seance", heure du relevé dans releve).
     """
     tickers = STOCK_TICKERS if stocks_only else ALL_TICKERS
 
@@ -152,7 +286,8 @@ async def screen_market(
             return None
 
     async with httpx.AsyncClient() as client:
-        results_raw = await asyncio.gather(*[fetch_one(client, t) for t in tickers])
+        results_raw, direct = await asyncio.gather(
+            asyncio.gather(*[fetch_one(client, t) for t in tickers]), cours_direct())
 
     # Sans ce garde-fou, une source injoignable renvoyait une liste vide, qui se
     # lit comme "aucun titre ne correspond aux criteres". C'est ce qui a masque
@@ -170,6 +305,7 @@ async def screen_market(
         if item is None:
             continue
         ticker, row = item
+        row = avec_direct(row, direct)
         rsi = _parse_optional(row.get("RSI"))
         var_1m = _parse_optional(row.get("1_Mois_Variation"))
         var_1y = _parse_optional(row.get("1_An_Variation"))
@@ -207,6 +343,10 @@ async def screen_market(
             "variation_1y": f"{var_1y:.2%}" if var_1y is not None else None,
             "volume_xof": row.get("Volume_XOF"),
             "valorisation": row.get("Valorisation"),
+            "plus_haut": row.get("Plus_Haut") or None,
+            "plus_bas": row.get("Plus_Bas") or None,
+            "source_cours": row["Cours_Source"],
+            "releve": row["Cours_Releve"] or None,
         })
 
     # Les titres sans RSI ferment la liste au lieu de l'ouvrir.
@@ -219,6 +359,7 @@ async def get_market_overview() -> dict:
     """
     Donne un aperçu rapide du marché BRVM :
     nombre de titres en hausse/baisse/stable, RSI moyen, top 5 hausses et baisses du jour.
+    Pendant la séance (lundi-vendredi, 9h00-15h00 UTC), cours et variations sont ceux de la séance en cours.
     """
     async def fetch_one(client: httpx.AsyncClient, ticker: str):
         try:
@@ -231,9 +372,10 @@ async def get_market_overview() -> dict:
             return None
 
     async with httpx.AsyncClient() as client:
-        rows_raw = await asyncio.gather(*[fetch_one(client, t) for t in STOCK_TICKERS])
+        rows_raw, direct = await asyncio.gather(
+            asyncio.gather(*[fetch_one(client, t) for t in STOCK_TICKERS]), cours_direct())
 
-    rows = [r for r in rows_raw if r is not None]
+    rows = [avec_direct(r, direct) for r in rows_raw if r is not None]
 
     # Meme garde-fou que screen_market : echouer bruyamment plutot que rendre
     # un marche a zero hausse et zero baisse, qui ressemble a une seance calme.
@@ -274,6 +416,8 @@ async def get_market_overview() -> dict:
         "rsi_moyen_marche": round(sum(rsi_values) / len(rsi_values), 2) if rsi_values else None,
         "top5_hausses": hausse[:5],
         "top5_baisses": baisse[:5],
+        # pendant la seance : heure du releve des cours (UTC) ; None = cours de la derniere cloture
+        "cours_en_seance_releves_a": direct["releve"] if direct else None,
     }
 
 
