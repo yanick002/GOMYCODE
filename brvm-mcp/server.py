@@ -154,6 +154,11 @@ def avec_direct(ligne: dict, direct: Optional[dict]) -> dict:
     if not d:
         ligne.update(Cours_Source="cloture", Cours_Releve="")
         return ligne
+    # Pas encore echange aujourd'hui : Sika garde la ligne de la veille (meme cours, meme volume que la derniere
+    # cloture). Le cours est le bon, mais la variation et les volumes du jour sont nuls, pas ceux de la veille.
+    if d["dernier"] == _parse_optional(ligne.get("Cours_Actuel")) and d["volume_titres"] == _parse_optional(ligne.get("Volume_Titres")):
+        d = {**d, "variation": 0.0, "volume_titres": 0.0, "volume_xof": 0.0,
+             "ouverture": None, "plus_haut": None, "plus_bas": None}
     ligne.update(
         Cloture_Veille=ligne.get("Cours_Actuel"),
         Cours_Actuel=d["dernier"],
